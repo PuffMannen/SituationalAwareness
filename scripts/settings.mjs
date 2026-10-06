@@ -1,0 +1,96 @@
+import { I18N, MODULE_ID } from "./constants.mjs";
+
+/**
+ * Setting keys registered by this module.
+ * @enum {string}
+ */
+export const SETTINGS = Object.freeze({
+  PROXIMITY_ENABLED: "proximityEnabled",
+  PROXIMITY_RANGE: "proximityRange",
+  PROXIMITY_TARGETS: "proximityTargets",
+  PROXIMITY_WALLS: "proximityWallsBlock",
+  LAST_KNOWN_ENABLED: "lastKnownEnabled",
+  LAST_KNOWN_DISPOSITIONS: "lastKnownDispositions",
+  LAST_KNOWN_SHARE: "lastKnownShare",
+  LAST_KNOWN_LIFETIME: "lastKnownLifetime",
+  LAST_KNOWN_GM: "lastKnownShowGM",
+  LAST_KNOWN_GHOST: "lastKnownShowGhost",
+  TRAIL_ENABLED: "trailingFogEnabled",
+  TRAIL_START: "trailingFogStart",
+  TRAIL_LENGTH: "trailingFogLength",
+  TRAIL_STRENGTH: "trailingFogStrength",
+  TRAIL_RESOLUTION: "trailingFogResolution"
+});
+
+/**
+ * Read one of this module's settings.
+ * @param {string} key    A value of {@link SETTINGS}
+ * @returns {*}
+ */
+export function getSetting(key) {
+  return game.settings.get(MODULE_ID, key);
+}
+
+/**
+ * Register all module settings. Called during the init hook.
+ * @param {object} callbacks                        Feature callbacks invoked when settings change
+ * @param {Function} callbacks.refreshVisibility    Re-evaluate token visibility
+ * @param {Function} callbacks.refreshMarkers       Redraw last-known-position markers
+ * @param {Function} callbacks.refreshTrail         Redraw the trailing fog overlay
+ * @param {Function} callbacks.rebuildTrail         Rebuild the trailing fog render texture
+ */
+export function registerSettings({refreshVisibility, refreshMarkers, refreshTrail, rebuildTrail}) {
+  const register = (key, data) => game.settings.register(MODULE_ID, key, {
+    name: `${I18N}.Settings.${key}.Name`,
+    hint: `${I18N}.Settings.${key}.Hint`,
+    config: true,
+    ...data
+  });
+
+  // Proximity awareness
+  register(SETTINGS.PROXIMITY_ENABLED, {scope: "world", type: Boolean, default: true, onChange: refreshVisibility});
+  register(SETTINGS.PROXIMITY_RANGE, {
+    scope: "world", type: Number, default: 2, range: {min: 1, max: 20, step: 1}, onChange: refreshVisibility
+  });
+  register(SETTINGS.PROXIMITY_TARGETS, {
+    scope: "world", type: String, default: "friendly", onChange: refreshVisibility,
+    choices: {
+      party: `${I18N}.Settings.${SETTINGS.PROXIMITY_TARGETS}.Party`,
+      friendly: `${I18N}.Settings.${SETTINGS.PROXIMITY_TARGETS}.Friendly`,
+      all: `${I18N}.Settings.${SETTINGS.PROXIMITY_TARGETS}.All`
+    }
+  });
+  register(SETTINGS.PROXIMITY_WALLS, {scope: "world", type: Boolean, default: false, onChange: refreshVisibility});
+
+  // Last known positions
+  register(SETTINGS.LAST_KNOWN_ENABLED, {scope: "world", type: Boolean, default: true, onChange: refreshMarkers});
+  register(SETTINGS.LAST_KNOWN_DISPOSITIONS, {
+    scope: "world", type: String, default: "hostile", onChange: refreshMarkers,
+    choices: {
+      hostile: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_DISPOSITIONS}.Hostile`,
+      hostileNeutral: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_DISPOSITIONS}.HostileNeutral`,
+      all: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_DISPOSITIONS}.All`
+    }
+  });
+  register(SETTINGS.LAST_KNOWN_SHARE, {scope: "world", type: Boolean, default: true});
+  register(SETTINGS.LAST_KNOWN_LIFETIME, {
+    scope: "world", type: Number, default: 0, range: {min: 0, max: 100, step: 1}, onChange: refreshMarkers
+  });
+  register(SETTINGS.LAST_KNOWN_GM, {scope: "client", type: Boolean, default: false, onChange: refreshMarkers});
+  register(SETTINGS.LAST_KNOWN_GHOST, {scope: "client", type: Boolean, default: true, onChange: refreshMarkers});
+
+  // Trailing fog
+  register(SETTINGS.TRAIL_ENABLED, {scope: "world", type: Boolean, default: true, onChange: refreshTrail});
+  register(SETTINGS.TRAIL_START, {
+    scope: "world", type: Number, default: 12, range: {min: 1, max: 100, step: 1}, onChange: rebuildTrail
+  });
+  register(SETTINGS.TRAIL_LENGTH, {
+    scope: "world", type: Number, default: 8, range: {min: 0, max: 50, step: 1}, onChange: rebuildTrail
+  });
+  register(SETTINGS.TRAIL_STRENGTH, {
+    scope: "world", type: Number, default: 0.85, range: {min: 0.1, max: 1, step: 0.05}, onChange: refreshTrail
+  });
+  register(SETTINGS.TRAIL_RESOLUTION, {
+    scope: "client", type: Number, default: 0.25, range: {min: 0.1, max: 1, step: 0.05}, onChange: rebuildTrail
+  });
+}

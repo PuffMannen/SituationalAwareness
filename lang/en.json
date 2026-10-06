@@ -1,0 +1,89 @@
+{
+  "SITAWARE": {
+    "Settings": {
+      "proximityEnabled": {
+        "Name": "Proximity Awareness",
+        "Hint": "Allied tokens close to one of your tokens stay visible, even outside line of sight or in darkness."
+      },
+      "proximityRange": {
+        "Name": "Proximity Range (grid spaces)",
+        "Hint": "How close an ally must be, measured between token centers, to stay visible."
+      },
+      "proximityTargets": {
+        "Name": "Proximity Targets",
+        "Hint": "Which tokens are kept visible by proximity. Tokens with a secret disposition are never revealed.",
+        "Party": "Player-owned tokens only",
+        "Friendly": "Player-owned and friendly tokens",
+        "All": "All tokens"
+      },
+      "proximityWallsBlock": {
+        "Name": "Walls Block Proximity",
+        "Hint": "If enabled, a sight-blocking wall between two tokens prevents proximity awareness."
+      },
+      "lastKnownEnabled": {
+        "Name": "Last Known Positions",
+        "Hint": "When a tracked token leaves your sight, mark where it was last seen and the direction it was heading."
+      },
+      "lastKnownDispositions": {
+        "Name": "Tracked Tokens",
+        "Hint": "Which tokens leave a last known position marker. Tokens you own are never tracked.",
+        "Hostile": "Hostile tokens",
+        "HostileNeutral": "Hostile and neutral tokens",
+        "All": "All tokens you do not own"
+      },
+      "lastKnownShare": {
+        "Name": "Share Sightings With Party",
+        "Hint": "When one player loses sight of a token, the marker is shared with every other player."
+      },
+      "lastKnownLifetime": {
+        "Name": "Marker Lifetime (rounds)",
+        "Hint": "Remove markers after this many rounds. Outside combat, elapsed game time is converted to rounds. Set to 0 to keep markers until the token is seen again."
+      },
+      "lastKnownShowGM": {
+        "Name": "Show Markers to GM",
+        "Hint": "Track last known positions for the GM while the GM is controlling tokens."
+      },
+      "lastKnownShowGhost": {
+        "Name": "Show Ghost Image",
+        "Hint": "Draw a faded copy of the token image inside last known position markers."
+      },
+      "trailingFogEnabled": {
+        "Name": "Trailing Fog",
+        "Hint": "Explored areas fade back into fog the further they are from your tokens. Saved fog exploration is not changed."
+      },
+      "trailingFogStart": {
+        "Name": "Trailing Fog Distance (grid spaces)",
+        "Hint": "Explored areas within this distance of your tokens stay fully clear."
+      },
+      "trailingFogLength": {
+        "Name": "Trailing Fog Fade Length (grid spaces)",
+        "Hint": "Distance over which explored areas fade from clear to fully fogged."
+      },
+      "trailingFogStrength": {
+        "Name": "Trailing Fog Strength",
+        "Hint": "How opaque fully faded areas become. 1 makes them look unexplored."
+      },
+      "trailingFogResolution": {
+        "Name": "Trailing Fog Resolution",
+        "Hint": "Texture resolution of the trailing fog overlay. Lower values are faster and softer."
+      }
+    },
+    "Keybindings": {
+      "ClearMarkers": {
+        "Name": "Clear Last Known Positions",
+        "Hint": "Remove all last known position markers on the current scene."
+      }
+    },
+    "Controls": {
+      "ClearMarkers": "Clear Last Known Positions"
+    },
+    "Marker": {
+      "JustNow": "Just now",
+      "RoundAgo": "{rounds} round ago",
+      "RoundsAgo": "{rounds} rounds ago"
+    },
+    "Notifications": {
+      "MarkersCleared": "Last known positions cleared."
+    }
+  }
+}
