@@ -9,6 +9,7 @@ import { registerSettings } from "./settings.mjs";
 import { ProximityAwareness } from "./features/proximity-awareness.mjs";
 import { LastKnownPositions } from "./features/last-known-positions.mjs";
 import { TrailingFog } from "./features/trailing-fog.mjs";
+import { ProximityProxies } from "./canvas/proximity-proxies.mjs";
 
 Hooks.once("init", () => {
   registerSettings({
@@ -32,6 +33,7 @@ Hooks.once("init", () => {
   });
 
   LastKnownPositions.registerHooks();
+  ProximityProxies.registerHooks();
   TrailingFog.registerHooks();
 });
 

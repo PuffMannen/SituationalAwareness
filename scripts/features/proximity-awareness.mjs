@@ -9,6 +9,26 @@ import { getObservers, getRenderedCenter, gridDistance, isSightBlocked } from ".
 export class ProximityAwareness {
 
   /**
+   * Tokens that are visible only because of proximity, not through core vision or detection.
+   * @type {WeakSet<foundry.canvas.placeables.Token>}
+   */
+  static #proximityOnly = new WeakSet();
+
+  /* -------------------------------------------- */
+
+  /**
+   * Is this token visible only because of proximity awareness?
+   * Core draws token images beneath the fog of war, so these tokens need a copy drawn above it.
+   * @param {foundry.canvas.placeables.Token} token
+   * @returns {boolean}
+   */
+  static isProximityOnly(token) {
+    return this.#proximityOnly.has(token);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Extend whichever Token class is configured once systems have finished their own setup.
    * This preserves system-specific Token subclasses instead of replacing them.
    */
@@ -22,7 +42,14 @@ export class ProximityAwareness {
     class SituationalAwarenessToken extends Base {
       /** @inheritDoc */
       get isVisible() {
-        return super.isVisible || ProximityAwareness.isAware(this);
+        if ( super.isVisible ) {
+          ProximityAwareness.#proximityOnly.delete(this);
+          return true;
+        }
+        const aware = ProximityAwareness.isAware(this);
+        if ( aware ) ProximityAwareness.#proximityOnly.add(this);
+        else ProximityAwareness.#proximityOnly.delete(this);
+        return aware;
       }
     }
 
