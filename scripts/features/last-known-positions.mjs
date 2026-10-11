@@ -1,5 +1,5 @@
 import { I18N, MODULE_ID, SOCKET_NAME } from "../constants.mjs";
-import { SETTINGS, getSetting } from "../settings.mjs";
+import { SETTINGS, getMarkerStyle, getSetting } from "../settings.mjs";
 import { getRenderedCenter, hasRestrictedVision } from "../helpers/observers.mjs";
 import { LastKnownMarker } from "../canvas/last-known-marker.mjs";
 
@@ -431,9 +431,9 @@ export class LastKnownPositions {
     if ( !this.#container ) return;
     const marker = this.#container.addChild(new LastKnownMarker(sighting));
     this.#markers.set(sighting.tokenId, marker);
-    marker.draw({showGhost: getSetting(SETTINGS.LAST_KNOWN_GHOST)})
-      .then(() => marker.setLabel(this.#formatAge(sighting)))
+    marker.draw(getMarkerStyle())
       .catch(err => console.error("Situational Awareness | Failed to draw marker", err));
+    marker.setAge(this.#ageInRounds(sighting));
   }
 
   /* -------------------------------------------- */
@@ -463,19 +463,5 @@ export class LastKnownPositions {
   static #isExpired(sighting) {
     const lifetime = getSetting(SETTINGS.LAST_KNOWN_LIFETIME);
     return (lifetime > 0) && (this.#ageInRounds(sighting) >= lifetime);
-  }
-
-  /* -------------------------------------------- */
-
-  /**
-   * Format the label shown under a marker.
-   * @param {LastKnownData} sighting
-   * @returns {string}
-   */
-  static #formatAge(sighting) {
-    const rounds = this.#ageInRounds(sighting);
-    if ( rounds < 1 ) return game.i18n.localize(`${I18N}.Marker.JustNow`);
-    const key = rounds === 1 ? "RoundAgo" : "RoundsAgo";
-    return game.i18n.format(`${I18N}.Marker.${key}`, {rounds});
   }
 }

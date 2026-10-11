@@ -1,0 +1,30 @@
+<section class="standard-form">
+  <fieldset>
+    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Color"}}</legend>
+    {{formGroup fields.colorMode value=style.colorMode label=(localize "SITAWARE.MarkerStyle.colorMode.Name") localize=true}}
+    {{formGroup fields.color value=style.color label=(localize "SITAWARE.MarkerStyle.color.Name") hint=(localize "SITAWARE.MarkerStyle.color.Hint")}}
+    {{formGroup fields.opacity value=style.opacity label=(localize "SITAWARE.MarkerStyle.opacity.Name")}}
+    {{formGroup fields.scale value=style.scale label=(localize "SITAWARE.MarkerStyle.scale.Name") hint=(localize "SITAWARE.MarkerStyle.scale.Hint")}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Outline"}}</legend>
+    {{formGroup fields.ring value=style.ring label=(localize "SITAWARE.MarkerStyle.ring.Name") localize=true}}
+    {{formGroup fields.ringWidth value=style.ringWidth label=(localize "SITAWARE.MarkerStyle.ringWidth.Name") hint=(localize "SITAWARE.MarkerStyle.ringWidth.Hint")}}
+    {{formGroup fields.showHeading value=style.showHeading label=(localize "SITAWARE.MarkerStyle.showHeading.Name")}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Image"}}</legend>
+    {{formGroup fields.image value=style.image label=(localize "SITAWARE.MarkerStyle.image.Name") localize=true}}
+    {{formGroup fields.imagePath value=style.imagePath label=(localize "SITAWARE.MarkerStyle.imagePath.Name") hint=(localize "SITAWARE.MarkerStyle.imagePath.Hint")}}
+    {{formGroup fields.imageOpacity value=style.imageOpacity label=(localize "SITAWARE.MarkerStyle.imageOpacity.Name")}}
+    {{formGroup fields.desaturate value=style.desaturate label=(localize "SITAWARE.MarkerStyle.desaturate.Name")}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Label"}}</legend>
+    {{formGroup fields.label value=style.label label=(localize "SITAWARE.MarkerStyle.label.Name") localize=true}}
+    {{formGroup fields.labelText value=style.labelText label=(localize "SITAWARE.MarkerStyle.labelText.Name") hint=(localize "SITAWARE.MarkerStyle.labelText.Hint")}}
+  </fieldset>
+</section>
