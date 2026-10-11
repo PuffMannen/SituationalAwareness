@@ -1,5 +1,5 @@
 import { I18N, MODULE_ID, SOCKET_NAME } from "../constants.mjs";
-import { SETTINGS, getSetting } from "../settings.mjs";
+import { SETTINGS, getMarkerStyle, getSetting } from "../settings.mjs";
 import { getRenderedCenter, hasRestrictedVision } from "../helpers/observers.mjs";
 import { LastKnownMarker } from "../canvas/last-known-marker.mjs";
 
@@ -129,6 +129,32 @@ export class LastKnownPositions {
   /* -------------------------------------------- */
 
   /**
+   * Describe the rendered markers, for troubleshooting from the browser console.
+   * @returns {object}
+   */
+  static debug() {
+    const container = this.#container;
+    return {
+      armed: this.#armed,
+      container: container ? {
+        visible: container.visible,
+        zIndex: container.zIndex,
+        index: canvas.interface.children.indexOf(container),
+        tokensLayerZIndex: canvas.tokens?.zIndex
+      } : null,
+      markers: Array.from(this.#markers.values(), marker => ({
+        tokenId: marker.data.tokenId,
+        direction: marker.data.direction,
+        img: marker.data.img,
+        alpha: marker.alpha,
+        children: marker.children.map(c => `${c.constructor.name}${c.visible ? "" : " (hidden)"}`)
+      }))
+    };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Prune expired sightings, then redraw markers and labels. Used when settings or time change.
    */
   static refresh() {
@@ -150,8 +176,11 @@ export class LastKnownPositions {
    * Build the marker container and restore persisted sightings for the new scene.
    */
   static #onCanvasReady() {
+    // Draw above the token layer. Each visible token erases its own footprint from everything
+    // beneath the token layer in the interface group, which would cut holes in markers.
     this.#container = new PIXI.Container();
     this.#container.eventMode = "none";
+    this.#container.zIndex = (canvas.tokens?.zIndex ?? 200) + 1;
     canvas.interface.addChild(this.#container);
 
     const stored = game.user.getFlag(MODULE_ID, FLAG_KEY)?.[canvas.scene.id] ?? [];
@@ -402,8 +431,9 @@ export class LastKnownPositions {
     if ( !this.#container ) return;
     const marker = this.#container.addChild(new LastKnownMarker(sighting));
     this.#markers.set(sighting.tokenId, marker);
-    marker.draw({showGhost: getSetting(SETTINGS.LAST_KNOWN_GHOST)})
-      .then(() => marker.setLabel(this.#formatAge(sighting)));
+    marker.draw(getMarkerStyle())
+      .catch(err => console.error("Situational Awareness | Failed to draw marker", err));
+    marker.setAge(this.#ageInRounds(sighting));
   }
 
   /* -------------------------------------------- */
@@ -433,19 +463,5 @@ export class LastKnownPositions {
   static #isExpired(sighting) {
     const lifetime = getSetting(SETTINGS.LAST_KNOWN_LIFETIME);
     return (lifetime > 0) && (this.#ageInRounds(sighting) >= lifetime);
-  }
-
-  /* -------------------------------------------- */
-
-  /**
-   * Format the label shown under a marker.
-   * @param {LastKnownData} sighting
-   * @returns {string}
-   */
-  static #formatAge(sighting) {
-    const rounds = this.#ageInRounds(sighting);
-    if ( rounds < 1 ) return game.i18n.localize(`${I18N}.Marker.JustNow`);
-    const key = rounds === 1 ? "RoundAgo" : "RoundsAgo";
-    return game.i18n.format(`${I18N}.Marker.${key}`, {rounds});
   }
 }

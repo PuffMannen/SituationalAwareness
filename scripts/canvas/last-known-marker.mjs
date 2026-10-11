@@ -8,11 +8,13 @@
  * @property {number} height           Token height in pixels
  * @property {number|null} direction   Heading of travel in radians, or null if never seen moving
  * @property {number} disposition      The token disposition, used for the marker color
- * @property {string|null} img         Token texture path for the ghost image
+ * @property {string|null} img         Token texture path, used when the style shows the token image
  * @property {number} worldTime        game.time.worldTime at the sighting
  * @property {{id: string, round: number}|null} combat   Active combat at the sighting
  * @property {number} seenAt           Real-world timestamp of the sighting
  */
+
+import { I18N } from "../constants.mjs";
 
 /** File extensions which load as video textures and are skipped for ghost images. */
 const VIDEO_EXTENSIONS = /\.(webm|mp4|m4v|ogv|ogg)(\?.*)?$/i;
@@ -37,77 +39,114 @@ export class LastKnownMarker extends PIXI.Container {
   data;
 
   /**
-   * The elapsed-time label.
+   * The text label, if the style shows one.
    * @type {PIXI.Text|null}
    */
   #label = null;
+
+  /**
+   * The style the marker was last drawn with.
+   * @type {import("../data/marker-style.mjs").MarkerStyle|null}
+   */
+  #style = null;
 
   /* -------------------------------------------- */
 
   /**
    * Draw (or redraw) the marker.
-   * @param {object} options
-   * @param {boolean} options.showGhost   Render a faded copy of the token image
+   * @param {import("../data/marker-style.mjs").MarkerStyle} style   The GM-configured marker style
    * @returns {Promise<this>}
    */
-  async draw({showGhost}) {
+  async draw(style) {
     for ( const child of this.removeChildren() ) child.destroy({children: true});
     this.#label = null;
+    this.#style = style;
 
     const {x, y, width, height, direction} = this.data;
     const gridSize = canvas.dimensions.size;
-    const radius = Math.max(width, height) / 2;
-    const color = LastKnownMarker.#colorFor(this.data.disposition);
+    const scale = style.scale;
+    const radius = (Math.max(width, height) / 2) * scale;
+    const color = style.colorMode === "custom"
+      ? Number(foundry.utils.Color.from(style.color))
+      : LastKnownMarker.#colorFor(this.data.disposition);
     this.position.set(x, y);
+    this.alpha = style.opacity;
 
-    // Frame and heading
+    // Outline and heading
     const frame = this.addChild(new PIXI.Graphics());
-    const lineWidth = Math.max(2, Math.round(gridSize * 0.04));
-    LastKnownMarker.#drawDashedCircle(frame, radius, lineWidth, color);
-    if ( Number.isFinite(direction) ) LastKnownMarker.#drawHeading(frame, radius, direction, color);
-
-    // Elapsed time label
-    const TextClass = foundry.canvas.containers?.PreciseText ?? PIXI.Text;
-    const style = TextClass.getTextStyle?.({fontSize: Math.max(12, Math.round(gridSize * 0.2))})
-      ?? {fontSize: Math.max(12, Math.round(gridSize * 0.2)), fill: 0xFFFFFF};
-    this.#label = this.addChild(new TextClass("", style));
-    this.#label.anchor.set(0.5, 0);
-    this.#label.position.set(0, radius + lineWidth + 2);
-
-    // Ghost image, loaded last so a slow texture never delays the frame
-    if ( showGhost && this.data.img && !VIDEO_EXTENSIONS.test(this.data.img) ) {
-      const loader = foundry.canvas.loadTexture ?? globalThis.loadTexture;
-      try {
-        const texture = await loader(this.data.img);
-        if ( this.destroyed || !texture ) return this;
-        const ghost = new PIXI.Sprite(texture);
-        ghost.anchor.set(0.5);
-        ghost.width = width;
-        ghost.height = height;
-        ghost.alpha = 0.35;
-        const ColorMatrix = PIXI.ColorMatrixFilter ?? PIXI.filters?.ColorMatrixFilter;
-        if ( ColorMatrix ) {
-          const filter = new ColorMatrix();
-          filter.desaturate();
-          ghost.filters = [filter];
-        }
-        this.addChildAt(ghost, 0);
-      }
-      catch(err) {
-        console.debug("Situational Awareness | Ghost image unavailable", err);
-      }
+    const lineWidth = Math.max(1, Math.round(gridSize * style.ringWidth));
+    if ( style.ring === "dashed" ) LastKnownMarker.#drawDashedCircle(frame, radius, lineWidth, color);
+    else if ( style.ring === "solid" ) frame.lineStyle({width: lineWidth, color, alpha: 0.9}).drawCircle(0, 0, radius);
+    frame.lineStyle({width: 0});
+    if ( style.showHeading && Number.isFinite(direction) ) {
+      LastKnownMarker.#drawHeading(frame, radius, direction, color);
     }
+
+    // Label
+    if ( style.label !== "none" ) {
+      const fontSize = Math.max(12, Math.round(gridSize * 0.2 * scale));
+      const TextClass = foundry.canvas.containers?.PreciseText ?? PIXI.Text;
+      const textStyle = TextClass.getTextStyle?.({fontSize}) ?? {fontSize, fill: 0xFFFFFF};
+      this.#label = this.addChild(new TextClass("", textStyle));
+      this.#label.anchor.set(0.5, 0);
+      this.#label.position.set(0, radius + lineWidth + 2);
+    }
+
+    // Image, loaded last so a slow texture never delays the outline
+    const src = {ghost: this.data.img, custom: style.imagePath}[style.image];
+    if ( src && !VIDEO_EXTENSIONS.test(src) ) await this.#drawImage(src, width * scale, height * scale, style);
     return this;
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Update the elapsed-time label.
-   * @param {string} text
+   * Load and add the marker image beneath the outline.
+   * @param {string} src
+   * @param {number} width
+   * @param {number} height
+   * @param {import("../data/marker-style.mjs").MarkerStyle} style
+   * @returns {Promise<void>}
    */
-  setLabel(text) {
-    if ( this.#label && !this.#label.destroyed ) this.#label.text = text;
+  async #drawImage(src, width, height, style) {
+    const loader = foundry.canvas.loadTexture ?? globalThis.loadTexture;
+    try {
+      const texture = await loader(src);
+      if ( this.destroyed || !texture || (this.#style !== style) ) return;
+      const sprite = new PIXI.Sprite(texture);
+      sprite.anchor.set(0.5);
+
+      // Fit inside the token footprint while keeping the image's aspect ratio
+      const fit = Math.min(width / texture.width, height / texture.height);
+      sprite.scale.set(fit);
+      sprite.alpha = style.imageOpacity;
+      const ColorMatrix = PIXI.ColorMatrixFilter ?? PIXI.filters?.ColorMatrixFilter;
+      if ( style.desaturate && ColorMatrix ) {
+        const filter = new ColorMatrix();
+        filter.desaturate();
+        sprite.filters = [filter];
+      }
+      this.addChildAt(sprite, 0);
+    }
+    catch(err) {
+      console.debug("Situational Awareness | Marker image unavailable", err);
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Update the label for the sighting's age.
+   * @param {number} rounds   How many rounds ago the token was seen
+   */
+  setAge(rounds) {
+    if ( !this.#label || this.#label.destroyed ) return;
+    if ( this.#style.label === "custom" ) {
+      this.#label.text = this.#style.labelText.replaceAll("{rounds}", String(rounds));
+      return;
+    }
+    if ( rounds < 1 ) this.#label.text = game.i18n.localize(`${I18N}.Marker.JustNow`);
+    else this.#label.text = game.i18n.format(`${I18N}.Marker.${rounds === 1 ? "RoundAgo" : "RoundsAgo"}`, {rounds});
   }
 
   /* -------------------------------------------- */
@@ -147,7 +186,7 @@ export class LastKnownMarker extends PIXI.Container {
       g.moveTo(Math.cos(start) * radius, Math.sin(start) * radius);
       g.arc(0, 0, radius, start, start + (step * 0.55));
     }
-    g.lineStyle();
+    g.lineStyle({width: 0});
   }
 
   /* -------------------------------------------- */
@@ -173,6 +212,6 @@ export class LastKnownMarker extends PIXI.Container {
       ...point(base, direction + spread)
     ]);
     g.endFill();
-    g.lineStyle();
+    g.lineStyle({width: 0});
   }
 }

@@ -1,4 +1,6 @@
 import { I18N, MODULE_ID } from "./constants.mjs";
+import { getMarkerStyleField } from "./data/marker-style.mjs";
+import { MarkerStyleConfig } from "./apps/marker-style-config.mjs";
 
 /**
  * Setting keys registered by this module.
@@ -14,7 +16,7 @@ export const SETTINGS = Object.freeze({
   LAST_KNOWN_SHARE: "lastKnownShare",
   LAST_KNOWN_LIFETIME: "lastKnownLifetime",
   LAST_KNOWN_GM: "lastKnownShowGM",
-  LAST_KNOWN_GHOST: "lastKnownShowGhost",
+  LAST_KNOWN_STYLE: "lastKnownStyle",
   TRAIL_ENABLED: "trailingFogEnabled",
   TRAIL_START: "trailingFogStart",
   TRAIL_LENGTH: "trailingFogLength",
@@ -30,6 +32,17 @@ export const SETTINGS = Object.freeze({
 export function getSetting(key) {
   return game.settings.get(MODULE_ID, key);
 }
+
+/**
+ * The GM-configured marker style, with defaults filled in for any missing field.
+ * @returns {import("./data/marker-style.mjs").MarkerStyle}
+ */
+export function getMarkerStyle() {
+  const defaults = getMarkerStyleField().getInitialValue({});
+  return foundry.utils.mergeObject(defaults, getSetting(SETTINGS.LAST_KNOWN_STYLE) ?? {}, {inplace: false});
+}
+
+/* -------------------------------------------- */
 
 /**
  * Register all module settings. Called during the init hook.
@@ -77,7 +90,24 @@ export function registerSettings({refreshVisibility, refreshMarkers, refreshTrai
     scope: "world", type: Number, default: 0, range: {min: 0, max: 100, step: 1}, onChange: refreshMarkers
   });
   register(SETTINGS.LAST_KNOWN_GM, {scope: "client", type: Boolean, default: false, onChange: refreshMarkers});
-  register(SETTINGS.LAST_KNOWN_GHOST, {scope: "client", type: Boolean, default: true, onChange: refreshMarkers});
+
+  // Marker appearance, edited by the GM through its own form rather than the settings list
+  const styleField = getMarkerStyleField();
+  game.settings.register(MODULE_ID, SETTINGS.LAST_KNOWN_STYLE, {
+    scope: "world",
+    config: false,
+    type: styleField,
+    default: styleField.getInitialValue({}),
+    onChange: refreshMarkers
+  });
+  game.settings.registerMenu(MODULE_ID, `${SETTINGS.LAST_KNOWN_STYLE}Menu`, {
+    name: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_STYLE}.Name`,
+    label: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_STYLE}.Label`,
+    hint: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_STYLE}.Hint`,
+    icon: "fa-solid fa-location-crosshairs",
+    type: MarkerStyleConfig,
+    restricted: true
+  });
 
   // Trailing fog
   register(SETTINGS.TRAIL_ENABLED, {scope: "world", type: Boolean, default: true, onChange: refreshTrail});

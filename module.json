@@ -2,7 +2,7 @@
   "id": "situational-awareness",
   "title": "Situational Awareness",
   "description": "Extends Fog of War with tactical awareness tools: last known enemy positions and headings, proximity awareness of nearby allies, and trailing fog that fades explored areas behind the party.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "authors": [
     {
       "name": "Paul Schulz"

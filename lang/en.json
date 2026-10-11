@@ -43,9 +43,10 @@
         "Name": "Show Markers to GM",
         "Hint": "Track last known positions for the GM while the GM is controlling tokens."
       },
-      "lastKnownShowGhost": {
-        "Name": "Show Ghost Image",
-        "Hint": "Draw a faded copy of the token image inside last known position markers."
+      "lastKnownStyle": {
+        "Name": "Marker Appearance",
+        "Label": "Customize Markers",
+        "Hint": "Choose how last known position markers look for every player: color, outline, image, label, size and opacity."
       },
       "trailingFogEnabled": {
         "Name": "Trailing Fog",
@@ -84,6 +85,71 @@
     },
     "Notifications": {
       "MarkersCleared": "Last known positions cleared."
+    },
+    "MarkerStyle": {
+      "Title": "Last Known Position Markers",
+      "Reset": "Reset to Defaults",
+      "Sections": {
+        "Color": "Color and Size",
+        "Outline": "Outline",
+        "Image": "Image",
+        "Label": "Label"
+      },
+      "colorMode": {
+        "Name": "Color",
+        "Disposition": "Token disposition",
+        "Custom": "Custom color"
+      },
+      "color": {
+        "Name": "Custom Color",
+        "Hint": "Used when Color is set to Custom color."
+      },
+      "opacity": {
+        "Name": "Marker Opacity"
+      },
+      "scale": {
+        "Name": "Size",
+        "Hint": "Marker size relative to the token that was seen."
+      },
+      "ring": {
+        "Name": "Outline",
+        "Dashed": "Dashed circle",
+        "Solid": "Solid circle",
+        "None": "No outline"
+      },
+      "ringWidth": {
+        "Name": "Outline Thickness",
+        "Hint": "Thickness as a fraction of the grid size."
+      },
+      "showHeading": {
+        "Name": "Show Heading Arrow"
+      },
+      "image": {
+        "Name": "Image",
+        "Ghost": "Token image",
+        "Custom": "Custom image",
+        "None": "No image"
+      },
+      "imagePath": {
+        "Name": "Custom Image",
+        "Hint": "Used when Image is set to Custom image. Use it to hide what was seen, for example with a question mark icon."
+      },
+      "imageOpacity": {
+        "Name": "Image Opacity"
+      },
+      "desaturate": {
+        "Name": "Grayscale Image"
+      },
+      "label": {
+        "Name": "Label",
+        "Age": "Time since seen",
+        "Custom": "Custom text",
+        "None": "No label"
+      },
+      "labelText": {
+        "Name": "Custom Label",
+        "Hint": "Used when Label is set to Custom text. {rounds} is replaced with the number of rounds since the sighting."
+      }
     }
   }
 }

@@ -52,6 +52,7 @@ Hooks.once("ready", () => {
   game.modules.get(MODULE_ID).api = Object.freeze({
     clearMarkers: () => LastKnownPositions.clear(),
     getSightings: () => LastKnownPositions.getSightings(),
+    debugMarkers: () => LastKnownPositions.debug(),
     isProximityAware: token => ProximityAwareness.isAware(token),
     refresh: () => {
       ProximityAwareness.refresh();

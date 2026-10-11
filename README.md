@@ -18,6 +18,17 @@ When a tracked token leaves your sight, a marker stays where you last saw it.
 - With sharing enabled, a sighting by one player reaches every other player. A newer sighting replaces an older one.
 - Tokens hidden by the GM do not leave a marker.
 
+The GM decides how markers look for everyone. Open Configure Settings, find Situational Awareness and click Customize Markers. The dialog controls:
+
+- **Color:** the token's disposition color, or one custom color.
+- **Size and opacity** of the whole marker.
+- **Outline:** dashed circle, solid circle or none, and its thickness.
+- **Heading arrow:** on or off.
+- **Image:** the token's own image, a custom image such as a question mark, or none. Opacity and grayscale are adjustable.
+- **Label:** time since seen, custom text, or none. Custom text can include `{rounds}` for the age in rounds.
+
+Changes apply to every connected player as soon as the GM saves.
+
 Clear all markers on a scene with the button in the Token controls, or bind a key under Configure Controls.
 
 ### Proximity awareness
@@ -41,7 +52,7 @@ Explored areas fade back into fog the further they are from your tokens. Everyth
 | Share Sightings With Party | World | On |
 | Marker Lifetime | World | 0, meaning never expire |
 | Show Markers to GM | Client | Off |
-| Show Ghost Image | Client | On |
+| Marker Appearance | World, GM only | Dashed ring, token image, time label |
 | Trailing Fog | World | On |
 | Trailing Fog Distance | World | 12 grid spaces |
 | Trailing Fog Fade Length | World | 8 grid spaces |
@@ -88,12 +99,15 @@ scripts/features/proximity-awareness.mjs
 scripts/features/last-known-positions.mjs
 scripts/features/trailing-fog.mjs
 scripts/canvas/last-known-marker.mjs PIXI marker graphic
+scripts/data/marker-style.mjs        Marker style schema
+scripts/apps/marker-style-config.mjs GM dialog for the marker style
+templates/marker-style-config.hbs    Template for that dialog
 ```
 
 ### How it hooks in
 
-- **Proximity awareness** extends `CONFIG.Token.objectClass` during `setup`, after systems have registered their own Token class. It overrides only the `isVisible` getter and defers to core first.
-- **Last known positions** listens to `refreshToken` and records a sighting when a token's `visible` flips from true to false. It ignores transitions for half a second after the canvas loads, while vision initializes.
+- **Proximity awareness** extends `CONFIG.Token.objectClass` during `setup`, after systems have registered their own Token class. It overrides only the `isVisible` getter and defers to core first. Core draws token images beneath the fog, so a revealed ally also gets a detection filter, the same mechanism core uses for tremorsense. Core then draws a copy above the fog, tinted like explored fog.
+- **Last known positions** draws its markers just above the token layer, because visible tokens erase their footprint from anything beneath it. It listens to `refreshToken` and records a sighting when a token's `visible` flips from true to false. It ignores transitions for half a second after the canvas loads, while vision initializes.
 - **Trailing fog** renders a mask into a render texture on `sightRefresh`. The mask is a full-scene fill with radial gradients and current line of sight erased from it. It is tinted with the scene's unexplored fog color and placed at the bottom of the interface group.
 
 ## Manual test checklist
