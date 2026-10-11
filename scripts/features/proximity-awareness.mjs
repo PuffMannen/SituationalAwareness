@@ -1,5 +1,6 @@
 import { SETTINGS, getSetting } from "../settings.mjs";
 import { getObservers, getRenderedCenter, gridDistance, isSightBlocked } from "../helpers/observers.mjs";
+import { ExploredFogFilter } from "../canvas/explored-fog-filter.mjs";
 
 /**
  * Proximity awareness: allied tokens close to one of the user's own tokens remain visible,
@@ -9,8 +10,8 @@ import { getObservers, getRenderedCenter, gridDistance, isSightBlocked } from ".
 export class ProximityAwareness {
 
   /**
-   * Pass-through filter used as the detection filter of proximity-revealed tokens.
-   * @type {PIXI.AlphaFilter|null}
+   * Filter used as the detection filter of proximity-revealed tokens.
+   * @type {ExploredFogFilter|null}
    */
   static #detectionFilter = null;
 
@@ -21,12 +22,13 @@ export class ProximityAwareness {
    *
    * Core draws token images beneath the fog of war. When a token has a detection filter, core
    * also draws a filtered copy of its image in the token layer, above the fog. This is how special
-   * detection modes such as tremorsense reveal tokens. A pass-through filter draws the token as is.
-   * @type {PIXI.AlphaFilter}
+   * detection modes such as tremorsense reveal tokens. The filter tints that copy with the scene's
+   * explored fog color, so a sensed ally looks as if it stands in explored fog, not in plain sight.
+   * @type {ExploredFogFilter}
    */
   static get detectionFilter() {
-    this.#detectionFilter ??= new PIXI.AlphaFilter(1);
-    return this.#detectionFilter;
+    this.#detectionFilter ??= new ExploredFogFilter();
+    return this.#detectionFilter.refreshColor();
   }
 
   /* -------------------------------------------- */
