@@ -147,7 +147,7 @@ export class LastKnownMarker extends PIXI.Container {
       g.moveTo(Math.cos(start) * radius, Math.sin(start) * radius);
       g.arc(0, 0, radius, start, start + (step * 0.55));
     }
-    g.lineStyle();
+    g.lineStyle({width: 0});
   }
 
   /* -------------------------------------------- */
@@ -173,6 +173,6 @@ export class LastKnownMarker extends PIXI.Container {
       ...point(base, direction + spread)
     ]);
     g.endFill();
-    g.lineStyle();
+    g.lineStyle({width: 0});
   }
 }

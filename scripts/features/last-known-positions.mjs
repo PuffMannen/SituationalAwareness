@@ -432,7 +432,8 @@ export class LastKnownPositions {
     const marker = this.#container.addChild(new LastKnownMarker(sighting));
     this.#markers.set(sighting.tokenId, marker);
     marker.draw({showGhost: getSetting(SETTINGS.LAST_KNOWN_GHOST)})
-      .then(() => marker.setLabel(this.#formatAge(sighting)));
+      .then(() => marker.setLabel(this.#formatAge(sighting)))
+      .catch(err => console.error("Situational Awareness | Failed to draw marker", err));
   }
 
   /* -------------------------------------------- */
