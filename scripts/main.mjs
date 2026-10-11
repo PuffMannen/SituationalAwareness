@@ -9,7 +9,6 @@ import { registerSettings } from "./settings.mjs";
 import { ProximityAwareness } from "./features/proximity-awareness.mjs";
 import { LastKnownPositions } from "./features/last-known-positions.mjs";
 import { TrailingFog } from "./features/trailing-fog.mjs";
-import { ProximityProxies } from "./canvas/proximity-proxies.mjs";
 
 Hooks.once("init", () => {
   registerSettings({
@@ -33,7 +32,6 @@ Hooks.once("init", () => {
   });
 
   LastKnownPositions.registerHooks();
-  ProximityProxies.registerHooks();
   TrailingFog.registerHooks();
 });
 
@@ -54,6 +52,7 @@ Hooks.once("ready", () => {
   game.modules.get(MODULE_ID).api = Object.freeze({
     clearMarkers: () => LastKnownPositions.clear(),
     getSightings: () => LastKnownPositions.getSightings(),
+    debugMarkers: () => LastKnownPositions.debug(),
     isProximityAware: token => ProximityAwareness.isAware(token),
     refresh: () => {
       ProximityAwareness.refresh();

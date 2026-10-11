@@ -9,21 +9,24 @@ import { getObservers, getRenderedCenter, gridDistance, isSightBlocked } from ".
 export class ProximityAwareness {
 
   /**
-   * Tokens that are visible only because of proximity, not through core vision or detection.
-   * @type {WeakSet<foundry.canvas.placeables.Token>}
+   * Pass-through filter used as the detection filter of proximity-revealed tokens.
+   * @type {PIXI.AlphaFilter|null}
    */
-  static #proximityOnly = new WeakSet();
+  static #detectionFilter = null;
 
   /* -------------------------------------------- */
 
   /**
-   * Is this token visible only because of proximity awareness?
-   * Core draws token images beneath the fog of war, so these tokens need a copy drawn above it.
-   * @param {foundry.canvas.placeables.Token} token
-   * @returns {boolean}
+   * The detection filter assigned to tokens revealed by proximity.
+   *
+   * Core draws token images beneath the fog of war. When a token has a detection filter, core
+   * also draws a filtered copy of its image in the token layer, above the fog. This is how special
+   * detection modes such as tremorsense reveal tokens. A pass-through filter draws the token as is.
+   * @type {PIXI.AlphaFilter}
    */
-  static isProximityOnly(token) {
-    return this.#proximityOnly.has(token);
+  static get detectionFilter() {
+    this.#detectionFilter ??= new PIXI.AlphaFilter(1);
+    return this.#detectionFilter;
   }
 
   /* -------------------------------------------- */
@@ -42,14 +45,10 @@ export class ProximityAwareness {
     class SituationalAwarenessToken extends Base {
       /** @inheritDoc */
       get isVisible() {
-        if ( super.isVisible ) {
-          ProximityAwareness.#proximityOnly.delete(this);
-          return true;
-        }
-        const aware = ProximityAwareness.isAware(this);
-        if ( aware ) ProximityAwareness.#proximityOnly.add(this);
-        else ProximityAwareness.#proximityOnly.delete(this);
-        return aware;
+        if ( super.isVisible ) return true;
+        if ( !ProximityAwareness.isAware(this) ) return false;
+        this.detectionFilter = ProximityAwareness.detectionFilter;
+        return true;
       }
     }
 

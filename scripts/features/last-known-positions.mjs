@@ -129,6 +129,32 @@ export class LastKnownPositions {
   /* -------------------------------------------- */
 
   /**
+   * Describe the rendered markers, for troubleshooting from the browser console.
+   * @returns {object}
+   */
+  static debug() {
+    const container = this.#container;
+    return {
+      armed: this.#armed,
+      container: container ? {
+        visible: container.visible,
+        zIndex: container.zIndex,
+        index: canvas.interface.children.indexOf(container),
+        tokensLayerZIndex: canvas.tokens?.zIndex
+      } : null,
+      markers: Array.from(this.#markers.values(), marker => ({
+        tokenId: marker.data.tokenId,
+        direction: marker.data.direction,
+        img: marker.data.img,
+        alpha: marker.alpha,
+        children: marker.children.map(c => `${c.constructor.name}${c.visible ? "" : " (hidden)"}`)
+      }))
+    };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Prune expired sightings, then redraw markers and labels. Used when settings or time change.
    */
   static refresh() {
@@ -150,8 +176,11 @@ export class LastKnownPositions {
    * Build the marker container and restore persisted sightings for the new scene.
    */
   static #onCanvasReady() {
+    // Draw above the token layer. Each visible token erases its own footprint from everything
+    // beneath the token layer in the interface group, which would cut holes in markers.
     this.#container = new PIXI.Container();
     this.#container.eventMode = "none";
+    this.#container.zIndex = (canvas.tokens?.zIndex ?? 200) + 1;
     canvas.interface.addChild(this.#container);
 
     const stored = game.user.getFlag(MODULE_ID, FLAG_KEY)?.[canvas.scene.id] ?? [];
