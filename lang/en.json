@@ -47,26 +47,6 @@
         "Name": "Marker Appearance",
         "Label": "Customize Markers",
         "Hint": "Choose how last known position markers look for every player: color, outline, image, label, size and opacity."
-      },
-      "trailingFogEnabled": {
-        "Name": "Trailing Fog",
-        "Hint": "Explored areas fade back into fog the further they are from your tokens. Saved fog exploration is not changed."
-      },
-      "trailingFogStart": {
-        "Name": "Trailing Fog Distance (grid spaces)",
-        "Hint": "Explored areas within this distance of your tokens stay fully clear."
-      },
-      "trailingFogLength": {
-        "Name": "Trailing Fog Fade Length (grid spaces)",
-        "Hint": "Distance over which explored areas fade from clear to fully fogged."
-      },
-      "trailingFogStrength": {
-        "Name": "Trailing Fog Strength",
-        "Hint": "How opaque fully faded areas become. 1 makes them look unexplored."
-      },
-      "trailingFogResolution": {
-        "Name": "Trailing Fog Resolution",
-        "Hint": "Texture resolution of the trailing fog overlay. Lower values are faster and softer."
       }
     },
     "Keybindings": {

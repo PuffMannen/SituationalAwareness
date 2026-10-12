@@ -16,12 +16,7 @@ export const SETTINGS = Object.freeze({
   LAST_KNOWN_SHARE: "lastKnownShare",
   LAST_KNOWN_LIFETIME: "lastKnownLifetime",
   LAST_KNOWN_GM: "lastKnownShowGM",
-  LAST_KNOWN_STYLE: "lastKnownStyle",
-  TRAIL_ENABLED: "trailingFogEnabled",
-  TRAIL_START: "trailingFogStart",
-  TRAIL_LENGTH: "trailingFogLength",
-  TRAIL_STRENGTH: "trailingFogStrength",
-  TRAIL_RESOLUTION: "trailingFogResolution"
+  LAST_KNOWN_STYLE: "lastKnownStyle"
 });
 
 /**
@@ -49,10 +44,8 @@ export function getMarkerStyle() {
  * @param {object} callbacks                        Feature callbacks invoked when settings change
  * @param {Function} callbacks.refreshVisibility    Re-evaluate token visibility
  * @param {Function} callbacks.refreshMarkers       Redraw last-known-position markers
- * @param {Function} callbacks.refreshTrail         Redraw the trailing fog overlay
- * @param {Function} callbacks.rebuildTrail         Rebuild the trailing fog render texture
  */
-export function registerSettings({refreshVisibility, refreshMarkers, refreshTrail, rebuildTrail}) {
+export function registerSettings({refreshVisibility, refreshMarkers}) {
   const register = (key, data) => game.settings.register(MODULE_ID, key, {
     name: `${I18N}.Settings.${key}.Name`,
     hint: `${I18N}.Settings.${key}.Hint`,
@@ -109,18 +102,4 @@ export function registerSettings({refreshVisibility, refreshMarkers, refreshTrai
     restricted: true
   });
 
-  // Trailing fog
-  register(SETTINGS.TRAIL_ENABLED, {scope: "world", type: Boolean, default: true, onChange: refreshTrail});
-  register(SETTINGS.TRAIL_START, {
-    scope: "world", type: Number, default: 12, range: {min: 1, max: 100, step: 1}, onChange: rebuildTrail
-  });
-  register(SETTINGS.TRAIL_LENGTH, {
-    scope: "world", type: Number, default: 8, range: {min: 0, max: 50, step: 1}, onChange: rebuildTrail
-  });
-  register(SETTINGS.TRAIL_STRENGTH, {
-    scope: "world", type: Number, default: 0.85, range: {min: 0.1, max: 1, step: 0.05}, onChange: refreshTrail
-  });
-  register(SETTINGS.TRAIL_RESOLUTION, {
-    scope: "client", type: Number, default: 0.25, range: {min: 0.1, max: 1, step: 0.05}, onChange: rebuildTrail
-  });
 }

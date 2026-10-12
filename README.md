@@ -35,10 +35,6 @@ Clear all markers on a scene with the button in the Token controls, or bind a ke
 
 Allied tokens within a set range of one of your tokens stay visible, even around corners or in darkness. You choose whether this covers player-owned tokens, friendly tokens or all tokens, and whether walls block it. Tokens with a secret disposition are never revealed.
 
-### Trailing fog
-
-Explored areas fade back into fog the further they are from your tokens. Everything inside the trail distance stays clear, then fades out over the fade length. Anything currently in line of sight is never covered. This is a visual overlay only: saved fog exploration is not changed, and turning the feature off restores the normal view.
-
 ## Settings
 
 | Setting | Scope | Default |
@@ -53,11 +49,6 @@ Explored areas fade back into fog the further they are from your tokens. Everyth
 | Marker Lifetime | World | 0, meaning never expire |
 | Show Markers to GM | Client | Off |
 | Marker Appearance | World, GM only | Dashed ring, token image, time label |
-| Trailing Fog | World | On |
-| Trailing Fog Distance | World | 12 grid spaces |
-| Trailing Fog Fade Length | World | 8 grid spaces |
-| Trailing Fog Strength | World | 0.85 |
-| Trailing Fog Resolution | Client | 0.25 |
 
 ## API
 
@@ -97,7 +88,6 @@ scripts/constants.mjs                Module id, socket name
 scripts/helpers/observers.mjs        Which tokens the user sees through, distances, wall tests
 scripts/features/proximity-awareness.mjs
 scripts/features/last-known-positions.mjs
-scripts/features/trailing-fog.mjs
 scripts/canvas/last-known-marker.mjs PIXI marker graphic
 scripts/data/marker-style.mjs        Marker style schema
 scripts/apps/marker-style-config.mjs GM dialog for the marker style
@@ -108,7 +98,6 @@ templates/marker-style-config.hbs    Template for that dialog
 
 - **Proximity awareness** extends `CONFIG.Token.objectClass` during `setup`, after systems have registered their own Token class. It overrides only the `isVisible` getter and defers to core first. Core draws token images beneath the fog, so a revealed ally also gets a detection filter, the same mechanism core uses for tremorsense. Core then draws a copy above the fog, tinted like explored fog.
 - **Last known positions** draws its markers just above the token layer, because visible tokens erase their footprint from anything beneath it. It listens to `refreshToken` and records a sighting when a token's `visible` flips from true to false. It ignores transitions for half a second after the canvas loads, while vision initializes.
-- **Trailing fog** renders a mask into a render texture on `sightRefresh`. The mask is a full-scene fill with radial gradients and current line of sight erased from it. It is tinted with the scene's unexplored fog color and placed at the bottom of the interface group.
 
 ## Manual test checklist
 
@@ -117,11 +106,9 @@ templates/marker-style-config.hbs    Template for that dialog
 3. Reload. Markers that were still active are restored.
 4. With two players connected, one loses sight of a hostile. The other player sees the marker unless they can currently see that token.
 5. Place a friendly token behind a wall within range. It stays visible. Enable Walls Block Proximity and it disappears.
-6. Walk a token away from an explored area. The area fades to fog beyond the trail distance.
-7. As GM with no token selected, nothing from this module is drawn.
+6. As GM with no token selected, nothing from this module is drawn.
 
 ## Known limitations
 
-- Trailing fog tints with the unexplored fog color. Scenes using a custom fog overlay image show a flat color in faded areas instead of that image.
 - Proximity is measured between token centers in straight-line grid spaces, not with the grid's diagonal rules.
 - Sightings are recorded by each client from its own vision. Two players with different vision may record different positions for the same token.
