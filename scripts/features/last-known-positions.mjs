@@ -26,6 +26,20 @@ const HEADING_THRESHOLD = 2;
 const ARM_DELAY_MS = 500;
 
 /**
+ * How long a cleared marker takes to fade out, in milliseconds.
+ * @type {number}
+ */
+const FADE_MS = 1000;
+
+/**
+ * Per-marker state used to clear markers whose spot is seen empty.
+ * @typedef SpotState
+ * @property {boolean} away          Whether the spot has been out of sight since the marker appeared
+ * @property {number|null} timer     Pending timeout which starts the fade
+ * @property {boolean} fading        Whether the marker is fading out
+ */
+
+/**
  * Last known position tracking. When a tracked token leaves the user's sight, a marker is
  * left where it was last seen, showing the direction it was heading. Markers clear as soon as
  * the token is seen again. Sightings persist per user and can be shared with the party.
@@ -49,6 +63,12 @@ export class LastKnownPositions {
    * @type {Map<string, {visible: boolean, center: {x: number, y: number}|null, direction: number|null}>}
    */
   static #states = new Map();
+
+  /**
+   * Clearing state for each marker, keyed by token id.
+   * @type {Map<string, SpotState>}
+   */
+  static #spots = new Map();
 
   /**
    * Parent container for markers.
@@ -86,7 +106,10 @@ export class LastKnownPositions {
     Hooks.on("canvasTearDown", () => this.#onCanvasTearDown());
     Hooks.on("refreshToken", token => this.#onRefreshToken(token));
     Hooks.on("deleteToken", document => this.#onDeleteToken(document));
-    Hooks.on("sightRefresh", () => this.#refreshContainerVisibility());
+    Hooks.on("sightRefresh", () => {
+      this.#refreshContainerVisibility();
+      this.#checkSpots();
+    });
     Hooks.on("controlToken", () => this.#refreshContainerVisibility());
     Hooks.on("updateCombat", () => this.refresh());
     Hooks.on("deleteCombat", () => this.refresh());
@@ -166,8 +189,10 @@ export class LastKnownPositions {
     }
     for ( const marker of this.#markers.values() ) marker.destroy({children: true});
     this.#markers.clear();
+    this.#cancelClearing();
     for ( const sighting of this.#sightings.values() ) this.#drawMarker(sighting);
     this.#refreshContainerVisibility();
+    this.#checkSpots();
   }
 
   /* -------------------------------------------- */
@@ -216,6 +241,8 @@ export class LastKnownPositions {
     this.#markers.clear();
     this.#sightings.clear();
     this.#states.clear();
+    this.#cancelClearing();
+    this.#spots.clear();
   }
 
   /* -------------------------------------------- */
@@ -350,6 +377,7 @@ export class LastKnownPositions {
     this.#sightings.set(sighting.tokenId, sighting);
     this.#markers.get(sighting.tokenId)?.destroy({children: true});
     this.#markers.delete(sighting.tokenId);
+    this.#forgetSpot(sighting.tokenId);
     this.#drawMarker(sighting);
     this.#dirty = true;
     this.#persistSoon();
@@ -365,6 +393,7 @@ export class LastKnownPositions {
     this.#sightings.delete(tokenId);
     this.#markers.get(tokenId)?.destroy({children: true});
     this.#markers.delete(tokenId);
+    this.#forgetSpot(tokenId);
     this.#dirty = true;
     this.#persistSoon();
   }
@@ -428,6 +457,88 @@ export class LastKnownPositions {
     if ( !isNewer(existing) ) return;
     const updated = stored.filter(s => s.tokenId !== sighting.tokenId).concat([sighting]);
     await this.#writeScene(sighting.sceneId, updated);
+  }
+
+  /* -------------------------------------------- */
+  /*  Clearing Empty Spots                        */
+  /* -------------------------------------------- */
+
+  /**
+   * Fade out markers whose spot the user can see again while the token is not there.
+   * A spot only counts as seen again after it has been out of sight since the marker appeared,
+   * because a token usually vanishes from a spot which is still in view.
+   */
+  static #checkSpots() {
+    if ( !this.#container || !this.#armed ) return;
+    if ( !getSetting(SETTINGS.LAST_KNOWN_CLEAR) || !this.#container.visible ) {
+      this.#cancelClearing();
+      return;
+    }
+    const delay = getSetting(SETTINGS.LAST_KNOWN_CLEAR_DELAY) * 1000;
+    for ( const [tokenId, marker] of this.#markers ) {
+      let spot = this.#spots.get(tokenId);
+      if ( !spot ) this.#spots.set(tokenId, spot = {away: false, timer: null, fading: false});
+      if ( spot.fading ) continue;
+      const {x, y, width, height} = marker.data;
+      const visible = canvas.visibility.testVisibility({x, y}, {tolerance: Math.min(width, height) / 4});
+      if ( !visible ) {
+        spot.away = true;
+        if ( spot.timer !== null ) clearTimeout(spot.timer);
+        spot.timer = null;
+      }
+      else if ( spot.away && (spot.timer === null) ) {
+        spot.timer = setTimeout(() => this.#fadeAndRemove(tokenId, marker), delay);
+      }
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Fade a marker out, then remove its sighting unless something replaced it meanwhile.
+   * @param {string} tokenId
+   * @param {LastKnownMarker} marker
+   * @returns {Promise<void>}
+   */
+  static async #fadeAndRemove(tokenId, marker) {
+    const spot = this.#spots.get(tokenId);
+    if ( !spot || (this.#markers.get(tokenId) !== marker) ) return;
+    spot.timer = null;
+    spot.fading = true;
+    try {
+      const completed = await marker.fadeOut(FADE_MS);
+      if ( completed && (this.#markers.get(tokenId) === marker) ) this.#remove(tokenId);
+    }
+    catch(err) {
+      console.error("Situational Awareness | Failed to fade marker", err);
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Stop pending fades, keeping what is known about which spots were out of sight.
+   * A fade already running finishes, unless its marker was destroyed to be redrawn.
+   */
+  static #cancelClearing() {
+    for ( const [tokenId, spot] of this.#spots ) {
+      if ( spot.timer !== null ) clearTimeout(spot.timer);
+      spot.timer = null;
+      const marker = this.#markers.get(tokenId);
+      if ( spot.fading && (!marker || marker.destroyed) ) spot.fading = false;
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Drop the clearing state of one marker.
+   * @param {string} tokenId
+   */
+  static #forgetSpot(tokenId) {
+    const spot = this.#spots.get(tokenId);
+    if ( spot?.timer != null ) clearTimeout(spot.timer);
+    this.#spots.delete(tokenId);
   }
 
   /* -------------------------------------------- */

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Markers fade out when you see their spot again and the token is gone. The new Clear Empty Markers and Clear Delay settings control this.
 - Last known positions for allies. Player-owned and friendly tokens you do not own can leave markers, controlled by the new Track Allies setting.
 - The marker dialog has an Enemies tab and an Allies tab, so allies can have their own style. Presets work on both tabs.
 - Tracked Tokens now applies only to tokens that are not allies. Its "All" option is renamed "All other tokens".

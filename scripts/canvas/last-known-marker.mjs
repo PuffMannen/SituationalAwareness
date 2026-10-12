@@ -15,7 +15,7 @@
  * @property {number} seenAt           Real-world timestamp of the sighting
  */
 
-import { I18N } from "../constants.mjs";
+import { I18N, MODULE_ID } from "../constants.mjs";
 
 /** File extensions which load as video textures and are skipped for ghost images. */
 const VIDEO_EXTENSIONS = /\.(webm|mp4|m4v|ogv|ogg)(\?.*)?$/i;
@@ -151,7 +151,32 @@ export class LastKnownMarker extends PIXI.Container {
   /** @inheritDoc */
   destroy(options) {
     this.#stopAnimation();
+    foundry.canvas.animation.CanvasAnimation.terminateAnimation(this.#fadeName);
     super.destroy(options);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * The name of this marker's fade animation.
+   * @type {string}
+   */
+  get #fadeName() {
+    return `${MODULE_ID}.fade.${this.data.tokenId}`;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Fade the marker out. Any looping animation stops first.
+   * @param {number} duration    Length of the fade in milliseconds
+   * @returns {Promise<boolean>} True once the fade completes, false if it was cut short
+   */
+  async fadeOut(duration) {
+    this.#stopAnimation();
+    return foundry.canvas.animation.CanvasAnimation.animate([{parent: this, attribute: "alpha", to: 0}], {
+      context: this, duration, name: this.#fadeName
+    });
   }
 
   /* -------------------------------------------- */
