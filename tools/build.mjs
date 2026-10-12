@@ -16,7 +16,7 @@ const ROOT = resolve(import.meta.dirname, "..");
 const { id: MODULE_ID, version } = JSON.parse(readFileSync(join(ROOT, "module.json"), "utf8"));
 
 /** Files and folders that make up the installed module. */
-const PACKAGE_FILES = ["module.json", "scripts", "lang", "templates", "README.md", "CHANGELOG.md"];
+const PACKAGE_FILES = ["module.json", "scripts", "lang", "templates", "README.md", "CHANGELOG.md", "LICENSE"];
 
 const OUT_DIR = join(ROOT, MODULE_ID);
 

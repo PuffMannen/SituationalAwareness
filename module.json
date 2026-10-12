@@ -8,6 +8,7 @@
       "name": "Paul Schulz"
     }
   ],
+  "license": "LICENSE",
   "compatibility": {
     "minimum": "14",
     "verified": "14"

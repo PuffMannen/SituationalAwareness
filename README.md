@@ -126,3 +126,7 @@ templates/marker-style-config.hbs    Template for that dialog
 
 - Proximity is measured between token centers in straight-line grid spaces, not with the grid's diagonal rules.
 - Sightings are recorded by each client from its own vision. Two players with different vision may record different positions for the same token.
+
+## License
+
+Released under the [MIT License](LICENSE). Foundry Virtual Tabletop itself and its API are covered by Foundry's own terms.
