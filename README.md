@@ -14,6 +14,7 @@ When a tracked token leaves your sight, a marker stays where you last saw it.
 - An arrow showing the direction it was moving when you last saw it.
 - A label with how many rounds ago it was seen. Outside combat, elapsed game time is converted to rounds.
 - The marker disappears as soon as the token is seen again, or when it is deleted.
+- When you see a marked spot again and the token is gone, the marker fades out after a short delay. This only happens once the spot has been out of your sight, so a token slipping around a corner still leaves its marker.
 - Markers are saved in your user flags, so they survive reloads and scene changes.
 - With sharing enabled, a sighting by one player reaches every other player. A newer sighting replaces an older one.
 - Tokens hidden by the GM do not leave a marker.
@@ -53,6 +54,8 @@ Allied tokens within a set range of one of your tokens stay visible, even around
 | Track Allies | World | On |
 | Share Sightings With Party | World | On |
 | Marker Lifetime | World | 0, meaning never expire |
+| Clear Empty Markers | World | On |
+| Clear Delay | World | 2 seconds |
 | Show Markers to GM | Client | Off |
 | Marker Appearance | World, GM only | Dashed ring, token image, time label, for enemies and allies alike |
 

@@ -43,6 +43,14 @@
         "Name": "Marker Lifetime (rounds)",
         "Hint": "Remove markers after this many rounds. Outside combat, elapsed game time is converted to rounds. Set to 0 to keep markers until the token is seen again."
       },
+      "lastKnownClearEmpty": {
+        "Name": "Clear Empty Markers",
+        "Hint": "When you see a marked spot again and the token is no longer there, the marker fades out. The spot must have been out of your sight first."
+      },
+      "lastKnownClearDelay": {
+        "Name": "Clear Delay (seconds)",
+        "Hint": "How long a marked spot must stay in view, empty, before its marker fades out."
+      },
       "lastKnownShowGM": {
         "Name": "Show Markers to GM",
         "Hint": "Track last known positions for the GM while the GM is controlling tokens."

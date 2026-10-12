@@ -16,6 +16,8 @@ export const SETTINGS = Object.freeze({
   LAST_KNOWN_ALLIES: "lastKnownAllies",
   LAST_KNOWN_SHARE: "lastKnownShare",
   LAST_KNOWN_LIFETIME: "lastKnownLifetime",
+  LAST_KNOWN_CLEAR: "lastKnownClearEmpty",
+  LAST_KNOWN_CLEAR_DELAY: "lastKnownClearDelay",
   LAST_KNOWN_GM: "lastKnownShowGM",
   LAST_KNOWN_STYLE: "lastKnownStyle",
   LAST_KNOWN_ALLY_STYLE: "lastKnownAllyStyle"
@@ -94,6 +96,10 @@ export function registerSettings({refreshVisibility, refreshMarkers}) {
   register(SETTINGS.LAST_KNOWN_SHARE, {scope: "world", type: Boolean, default: true});
   register(SETTINGS.LAST_KNOWN_LIFETIME, {
     scope: "world", type: Number, default: 0, range: {min: 0, max: 100, step: 1}, onChange: refreshMarkers
+  });
+  register(SETTINGS.LAST_KNOWN_CLEAR, {scope: "world", type: Boolean, default: true, onChange: refreshMarkers});
+  register(SETTINGS.LAST_KNOWN_CLEAR_DELAY, {
+    scope: "world", type: Number, default: 2, range: {min: 0, max: 30, step: 1}, onChange: refreshMarkers
   });
   register(SETTINGS.LAST_KNOWN_GM, {scope: "client", type: Boolean, default: false, onChange: refreshMarkers});
 
