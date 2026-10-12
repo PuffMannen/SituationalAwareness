@@ -18,14 +18,18 @@ When a tracked token leaves your sight, a marker stays where you last saw it.
 - With sharing enabled, a sighting by one player reaches every other player. A newer sighting replaces an older one.
 - Tokens hidden by the GM do not leave a marker.
 
-The GM decides how markers look for everyone. Open Configure Settings, find Situational Awareness and click Customize Markers. The dialog controls:
+The GM decides how markers look for everyone. Open Configure Settings, find Situational Awareness and click Customize Markers.
+
+Start from a preset to match your game world: Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker or Minimal. A preset fills in the form, and you can adjust any field before saving. The dialog controls:
 
 - **Color:** the token's disposition color, or one custom color.
 - **Size and opacity** of the whole marker.
-- **Outline:** dashed circle, solid circle or none, and its thickness.
-- **Heading arrow:** on or off.
+- **Shape:** circle, square, diamond, triangle, hexagon, star, pentagram, target cross or target bullseye.
+- **Outline:** dashed, solid or none, and its thickness. An optional fill colors the inside of the shape.
+- **Heading arrow:** off, a small arrowhead on the edge, or a large arrow through the marker.
 - **Image:** the token's own image, a custom image such as a question mark, or none. Opacity and grayscale are adjustable.
 - **Label:** time since seen, custom text, or none. Custom text can include `{rounds}` for the age in rounds.
+- **Animation:** none, pulsing fade, pulsing size, pulsing glow or rotation, with an adjustable cycle length.
 
 Changes apply to every connected player as soon as the GM saves.
 
@@ -94,6 +98,7 @@ scripts/features/proximity-awareness.mjs
 scripts/features/last-known-positions.mjs
 scripts/canvas/last-known-marker.mjs PIXI marker graphic
 scripts/data/marker-style.mjs        Marker style schema
+scripts/data/marker-presets.mjs      Ready-made marker styles
 scripts/apps/marker-style-config.mjs GM dialog for the marker style
 templates/marker-style-config.hbs    Template for that dialog
 ```

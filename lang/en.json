@@ -69,11 +69,29 @@
     "MarkerStyle": {
       "Title": "Last Known Position Markers",
       "Reset": "Reset to Defaults",
+      "Preset": {
+        "Name": "Preset",
+        "Choose": "Choose a preset",
+        "Hint": "Fill in the form with a ready-made style for a kind of game world. Adjust it if you like, then save."
+      },
+      "Presets": {
+        "Classic": "Classic",
+        "Tactical": "Modern tactical",
+        "Espionage": "Espionage",
+        "SciFi": "Science fiction",
+        "Arcane": "Arcane fantasy",
+        "Horror": "Horror",
+        "Western": "Western",
+        "Tracker": "Tracker",
+        "Minimal": "Minimal"
+      },
       "Sections": {
         "Color": "Color and Size",
-        "Outline": "Outline",
+        "Shape": "Shape",
+        "Heading": "Heading",
         "Image": "Image",
-        "Label": "Label"
+        "Label": "Label",
+        "Animation": "Animation"
       },
       "colorMode": {
         "Name": "Color",
@@ -91,18 +109,39 @@
         "Name": "Size",
         "Hint": "Marker size relative to the token that was seen."
       },
+      "shape": {
+        "Name": "Shape",
+        "Circle": "Circle",
+        "Square": "Square",
+        "Diamond": "Diamond",
+        "Triangle": "Triangle",
+        "Hexagon": "Hexagon",
+        "Star": "Star",
+        "Pentagram": "Pentagram",
+        "Crosshair": "Target cross",
+        "Bullseye": "Target bullseye"
+      },
       "ring": {
         "Name": "Outline",
-        "Dashed": "Dashed circle",
-        "Solid": "Solid circle",
+        "Dashed": "Dashed",
+        "Solid": "Solid",
         "None": "No outline"
       },
       "ringWidth": {
         "Name": "Outline Thickness",
         "Hint": "Thickness as a fraction of the grid size."
       },
+      "fillOpacity": {
+        "Name": "Fill Opacity",
+        "Hint": "Opacity of the fill inside the shape. Set to 0 for no fill."
+      },
       "showHeading": {
         "Name": "Show Heading Arrow"
+      },
+      "headingStyle": {
+        "Name": "Heading Arrow",
+        "Edge": "Small arrowhead on the edge",
+        "Large": "Large arrow through the marker"
       },
       "image": {
         "Name": "Image",
@@ -129,6 +168,18 @@
       "labelText": {
         "Name": "Custom Label",
         "Hint": "Used when Label is set to Custom text. {rounds} is replaced with the number of rounds since the sighting."
+      },
+      "animation": {
+        "Name": "Animation",
+        "None": "None",
+        "PulseFade": "Pulsing fade",
+        "PulseSize": "Pulsing size",
+        "PulseGlow": "Pulsing glow",
+        "Rotate": "Rotation"
+      },
+      "animationSpeed": {
+        "Name": "Animation Cycle (seconds)",
+        "Hint": "How long one pulse or one full turn takes."
       }
     }
   }
