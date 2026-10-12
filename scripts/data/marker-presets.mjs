@@ -1,0 +1,91 @@
+import { I18N } from "../constants.mjs";
+import { getMarkerStyleField } from "./marker-style.mjs";
+
+/** @import { MarkerStyle } from "./marker-style.mjs" */
+
+/**
+ * Ready-made marker styles for different kinds of game worlds. Each preset lists only the
+ * fields that differ from the default style. Applying one fills in the marker style dialog.
+ * @type {Readonly<Record<string, {label: string, style: Partial<MarkerStyle>}>>}
+ */
+export const MARKER_PRESETS = Object.freeze({
+  classic: {
+    label: `${I18N}.MarkerStyle.Presets.Classic`,
+    style: {}
+  },
+  tactical: {
+    label: `${I18N}.MarkerStyle.Presets.Tactical`,
+    style: {
+      shape: "crosshair", ring: "solid", ringWidth: 0.03,
+      colorMode: "custom", color: "#ff3b30",
+      image: "none"
+    }
+  },
+  espionage: {
+    label: `${I18N}.MarkerStyle.Presets.Espionage`,
+    style: {
+      shape: "bullseye", ring: "solid", ringWidth: 0.025,
+      colorMode: "custom", color: "#39ff14",
+      image: "none", showHeading: false,
+      animation: "pulseSize", animationSpeed: 1.5
+    }
+  },
+  scifi: {
+    label: `${I18N}.MarkerStyle.Presets.SciFi`,
+    style: {
+      shape: "hexagon", ring: "solid", ringWidth: 0.03, fillOpacity: 0.12,
+      colorMode: "custom", color: "#00e5ff",
+      image: "none", label: "custom", labelText: "SIGNAL LOST",
+      animation: "pulseGlow", animationSpeed: 2
+    }
+  },
+  arcane: {
+    label: `${I18N}.MarkerStyle.Presets.Arcane`,
+    style: {
+      shape: "pentagram", ring: "solid", ringWidth: 0.025,
+      colorMode: "custom", color: "#b388ff",
+      imageOpacity: 0.25, label: "none",
+      animation: "rotate", animationSpeed: 12
+    }
+  },
+  horror: {
+    label: `${I18N}.MarkerStyle.Presets.Horror`,
+    style: {
+      shape: "circle", ring: "dashed",
+      colorMode: "custom", color: "#c0001a",
+      showHeading: false, imageOpacity: 0.3,
+      label: "custom", labelText: "?",
+      animation: "pulseFade", animationSpeed: 3
+    }
+  },
+  western: {
+    label: `${I18N}.MarkerStyle.Presets.Western`,
+    style: {
+      shape: "star", ring: "solid", ringWidth: 0.03, fillOpacity: 0.1,
+      colorMode: "custom", color: "#d4a017"
+    }
+  },
+  tracker: {
+    label: `${I18N}.MarkerStyle.Presets.Tracker`,
+    style: {
+      ring: "none", headingStyle: "large", image: "none"
+    }
+  },
+  minimal: {
+    label: `${I18N}.MarkerStyle.Presets.Minimal`,
+    style: {
+      ring: "none", fillOpacity: 0.5, scale: 0.4,
+      showHeading: false, image: "none", label: "none"
+    }
+  }
+});
+
+/**
+ * The complete marker style for a preset.
+ * @param {string} key    A key of {@link MARKER_PRESETS}
+ * @returns {MarkerStyle}
+ */
+export function getPresetStyle(key) {
+  const defaults = getMarkerStyleField().getInitialValue({});
+  return foundry.utils.mergeObject(defaults, MARKER_PRESETS[key]?.style ?? {}, {inplace: false});
+}
