@@ -8,17 +8,11 @@ import { I18N, MODULE_ID } from "./constants.mjs";
 import { registerSettings } from "./settings.mjs";
 import { ProximityAwareness } from "./features/proximity-awareness.mjs";
 import { LastKnownPositions } from "./features/last-known-positions.mjs";
-import { TrailingFog } from "./features/trailing-fog.mjs";
 
 Hooks.once("init", () => {
   registerSettings({
-    refreshVisibility: () => {
-      ProximityAwareness.refresh();
-      TrailingFog.render();
-    },
-    refreshMarkers: () => LastKnownPositions.refresh(),
-    refreshTrail: () => TrailingFog.render(),
-    rebuildTrail: () => TrailingFog.rebuild()
+    refreshVisibility: () => ProximityAwareness.refresh(),
+    refreshMarkers: () => LastKnownPositions.refresh()
   });
 
   game.keybindings.register(MODULE_ID, "clearMarkers", {
@@ -32,7 +26,6 @@ Hooks.once("init", () => {
   });
 
   LastKnownPositions.registerHooks();
-  TrailingFog.registerHooks();
 });
 
 /* -------------------------------------------- */
@@ -57,7 +50,6 @@ Hooks.once("ready", () => {
     refresh: () => {
       ProximityAwareness.refresh();
       LastKnownPositions.refresh();
-      TrailingFog.render();
     }
   });
 });

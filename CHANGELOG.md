@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Removed trailing fog to keep the module focused. Its settings are no longer registered, and saved fog exploration was never changed by it, so nothing needs cleaning up.
+
 ## 0.2.0
 
 - The GM can customize last known position markers from a new settings dialog: color, size, opacity, outline, heading arrow, image and label.
