@@ -1,7 +1,7 @@
 import { I18N } from "../constants.mjs";
 import { getMarkerStyleField } from "./marker-style.mjs";
 
-/** @import { MarkerStyle } from "./marker-style.mjs" */
+/** @import { MarkerKind, MarkerStyle } from "./marker-style.mjs" */
 
 /**
  * Ready-made marker styles for different kinds of game worlds. Each preset lists only the
@@ -81,11 +81,12 @@ export const MARKER_PRESETS = Object.freeze({
 });
 
 /**
- * The complete marker style for a preset.
- * @param {string} key    A key of {@link MARKER_PRESETS}
+ * The complete marker style for a preset, applied to one kind of marker.
+ * @param {string} key                A key of {@link MARKER_PRESETS}
+ * @param {MarkerKind} [kind="enemy"]
  * @returns {MarkerStyle}
  */
-export function getPresetStyle(key) {
-  const defaults = getMarkerStyleField().getInitialValue({});
+export function getPresetStyle(key, kind="enemy") {
+  const defaults = getMarkerStyleField(kind).getInitialValue({});
   return foundry.utils.mergeObject(defaults, MARKER_PRESETS[key]?.style ?? {}, {inplace: false});
 }

@@ -1,5 +1,5 @@
 import { SETTINGS, getSetting } from "../settings.mjs";
-import { getObservers, getRenderedCenter, gridDistance, isSightBlocked } from "../helpers/observers.mjs";
+import { getObservers, getRenderedCenter, gridDistance, isAlly, isSightBlocked } from "../helpers/observers.mjs";
 import { ExploredFogFilter } from "../canvas/explored-fog-filter.mjs";
 
 /**
@@ -108,7 +108,7 @@ export class ProximityAwareness {
     const isParty = !!token.actor?.hasPlayerOwner;
     switch ( getSetting(SETTINGS.PROXIMITY_TARGETS) ) {
       case "party": return isParty;
-      case "friendly": return isParty || (disposition === D.FRIENDLY);
+      case "friendly": return isAlly(token);
       case "all": return true;
       default: return false;
     }

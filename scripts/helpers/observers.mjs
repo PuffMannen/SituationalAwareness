@@ -17,6 +17,19 @@ export function getObservers() {
 }
 
 /**
+ * Whether a token is on the party's side: owned by a player or given a friendly disposition.
+ * Secret tokens never count, so nothing reveals them.
+ * @param {foundry.canvas.placeables.Token} token
+ * @returns {boolean}
+ */
+export function isAlly(token) {
+  const D = CONST.TOKEN_DISPOSITIONS;
+  const disposition = token.document.disposition;
+  if ( disposition === D.SECRET ) return false;
+  return !!token.actor?.hasPlayerOwner || (disposition === D.FRIENDLY);
+}
+
+/**
  * Whether the user currently sees the scene through restricted token vision.
  * @returns {boolean}
  */
