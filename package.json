@@ -5,8 +5,10 @@
   "description": "Fog of War enhancements for Foundry Virtual Tabletop.",
   "type": "module",
   "scripts": {
-    "lint": "eslint scripts",
-    "lint:fix": "eslint scripts --fix"
+    "build": "node tools/build.mjs",
+    "deploy": "node tools/build.mjs --deploy",
+    "lint": "eslint scripts tools",
+    "lint:fix": "eslint scripts tools --fix"
   },
   "devDependencies": {
     "eslint": "^10.12.0",
