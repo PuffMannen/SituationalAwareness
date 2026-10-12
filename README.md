@@ -17,8 +17,9 @@ When a tracked token leaves your sight, a marker stays where you last saw it.
 - Markers are saved in your user flags, so they survive reloads and scene changes.
 - With sharing enabled, a sighting by one player reaches every other player. A newer sighting replaces an older one.
 - Tokens hidden by the GM do not leave a marker.
+- Allies, meaning player-owned or friendly tokens you do not own, can leave markers too. Turn this on or off with Track Allies.
 
-The GM decides how markers look for everyone. Open Configure Settings, find Situational Awareness and click Customize Markers.
+The GM decides how markers look for everyone. Open Configure Settings, find Situational Awareness and click Customize Markers. Enemies and allies each have their own tab with the same options.
 
 Start from a preset to match your game world: Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker or Minimal. A preset fills in the form, and you can adjust any field before saving. The dialog controls:
 
@@ -49,10 +50,11 @@ Allied tokens within a set range of one of your tokens stay visible, even around
 | Walls Block Proximity | World | Off |
 | Last Known Positions | World | On |
 | Tracked Tokens | World | Hostile |
+| Track Allies | World | On |
 | Share Sightings With Party | World | On |
 | Marker Lifetime | World | 0, meaning never expire |
 | Show Markers to GM | Client | Off |
-| Marker Appearance | World, GM only | Dashed ring, token image, time label |
+| Marker Appearance | World, GM only | Dashed ring, token image, time label, for enemies and allies alike |
 
 ## API
 

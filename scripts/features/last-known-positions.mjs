@@ -1,9 +1,10 @@
 import { I18N, MODULE_ID, SOCKET_NAME } from "../constants.mjs";
 import { SETTINGS, getMarkerStyle, getSetting } from "../settings.mjs";
-import { getRenderedCenter, hasRestrictedVision } from "../helpers/observers.mjs";
+import { getRenderedCenter, hasRestrictedVision, isAlly } from "../helpers/observers.mjs";
 import { LastKnownMarker } from "../canvas/last-known-marker.mjs";
 
 /** @import { LastKnownData } from "../canvas/last-known-marker.mjs" */
+/** @import { MarkerKind } from "../data/marker-style.mjs" */
 
 /**
  * The user flag holding persisted sightings, keyed by scene id.
@@ -159,8 +160,9 @@ export class LastKnownPositions {
    */
   static refresh() {
     if ( !canvas.ready || !this.#container ) return;
+    const tracksAllies = getSetting(SETTINGS.LAST_KNOWN_ALLIES);
     for ( const sighting of Array.from(this.#sightings.values()) ) {
-      if ( this.#isExpired(sighting) ) this.#remove(sighting.tokenId);
+      if ( this.#isExpired(sighting) || (sighting.ally && !tracksAllies) ) this.#remove(sighting.tokenId);
     }
     for ( const marker of this.#markers.values() ) marker.destroy({children: true});
     this.#markers.clear();
@@ -195,7 +197,7 @@ export class LastKnownPositions {
       if ( !canvas.ready ) return;
       for ( const token of canvas.tokens.placeables ) {
         this.#states.set(token.id, {visible: token.visible, center: getRenderedCenter(token), direction: null});
-        if ( token.visible && this.#isTracked(token) ) this.#remove(token.id);
+        if ( token.visible && this.#trackingKind(token) ) this.#remove(token.id);
       }
       this.#armed = true;
     }, ARM_DELAY_MS);
@@ -237,7 +239,9 @@ export class LastKnownPositions {
    * @param {foundry.canvas.placeables.Token} token
    */
   static #onRefreshToken(token) {
-    if ( !this.#armed || token.isPreview || !this.#isTracked(token) ) return;
+    if ( !this.#armed || token.isPreview ) return;
+    const kind = this.#trackingKind(token);
+    if ( !kind ) return;
     const state = this.#states.get(token.id) ?? {visible: false, center: null, direction: null};
     this.#states.set(token.id, state);
 
@@ -259,7 +263,7 @@ export class LastKnownPositions {
 
     // A token hidden by the GM was removed from play, not lost from sight.
     if ( token.document.hidden || !state.center ) return;
-    const sighting = this.#createSighting(token, state);
+    const sighting = this.#createSighting(token, state, kind);
     this.#upsert(sighting);
     if ( getSetting(SETTINGS.LAST_KNOWN_SHARE) ) {
       game.socket.emit(SOCKET_NAME, {action: "sighting", data: sighting});
@@ -281,25 +285,29 @@ export class LastKnownPositions {
   /* -------------------------------------------- */
 
   /**
-   * Should this token leave a marker when it disappears from view?
+   * Which kind of marker this token leaves when it disappears from view, if any.
+   * Allies are player-owned or friendly tokens. Every other token is tracked by disposition.
    * @param {foundry.canvas.placeables.Token} token
-   * @returns {boolean}
+   * @returns {MarkerKind|null}
    */
-  static #isTracked(token) {
-    if ( !getSetting(SETTINGS.LAST_KNOWN_ENABLED) ) return false;
+  static #trackingKind(token) {
+    if ( !getSetting(SETTINGS.LAST_KNOWN_ENABLED) ) return null;
     if ( game.user.isGM ) {
-      if ( !getSetting(SETTINGS.LAST_KNOWN_GM) || token.actor?.hasPlayerOwner ) return false;
+      if ( !getSetting(SETTINGS.LAST_KNOWN_GM) || token.actor?.hasPlayerOwner ) return null;
     }
-    else if ( token.isOwner ) return false;
+    else if ( token.isOwner ) return null;
 
+    if ( isAlly(token) ) return getSetting(SETTINGS.LAST_KNOWN_ALLIES) ? "ally" : null;
     const D = CONST.TOKEN_DISPOSITIONS;
     const disposition = token.document.disposition;
+    let tracked;
     switch ( getSetting(SETTINGS.LAST_KNOWN_DISPOSITIONS) ) {
-      case "hostile": return disposition === D.HOSTILE;
-      case "hostileNeutral": return (disposition === D.HOSTILE) || (disposition === D.NEUTRAL);
-      case "all": return true;
-      default: return false;
+      case "hostile": tracked = disposition === D.HOSTILE; break;
+      case "hostileNeutral": tracked = (disposition === D.HOSTILE) || (disposition === D.NEUTRAL); break;
+      case "all": tracked = true; break;
+      default: tracked = false;
     }
+    return tracked ? "enemy" : null;
   }
 
   /* -------------------------------------------- */
@@ -308,9 +316,10 @@ export class LastKnownPositions {
    * Build sighting data from a token's last visible state.
    * @param {foundry.canvas.placeables.Token} token
    * @param {{center: {x: number, y: number}, direction: number|null}} state
+   * @param {MarkerKind} kind
    * @returns {LastKnownData}
    */
-  static #createSighting(token, state) {
+  static #createSighting(token, state, kind) {
     const combat = game.combat?.started ? {id: game.combat.id, round: game.combat.round} : null;
     return {
       tokenId: token.id,
@@ -321,6 +330,7 @@ export class LastKnownPositions {
       height: token.h,
       direction: state.direction,
       disposition: token.document.disposition,
+      ally: kind === "ally",
       img: token.document.texture?.src ?? null,
       worldTime: game.time.worldTime,
       combat,
@@ -406,8 +416,9 @@ export class LastKnownPositions {
     // Sighting on the scene this user is viewing
     if ( canvas.ready && (sighting.sceneId === canvas.scene.id) ) {
       const token = canvas.tokens.get(sighting.tokenId);
-      if ( !token || token.visible || !this.#isTracked(token) ) return;
-      if ( isNewer(this.#sightings.get(sighting.tokenId)) ) this.#upsert(sighting);
+      const kind = token && !token.visible ? this.#trackingKind(token) : null;
+      if ( !kind ) return;
+      if ( isNewer(this.#sightings.get(sighting.tokenId)) ) this.#upsert({...sighting, ally: kind === "ally"});
       return;
     }
 
@@ -431,7 +442,7 @@ export class LastKnownPositions {
     if ( !this.#container ) return;
     const marker = this.#container.addChild(new LastKnownMarker(sighting));
     this.#markers.set(sighting.tokenId, marker);
-    marker.draw(getMarkerStyle())
+    marker.draw(getMarkerStyle(sighting.ally ? "ally" : "enemy"))
       .catch(err => console.error("Situational Awareness | Failed to draw marker", err));
     marker.setAge(this.#ageInRounds(sighting));
   }

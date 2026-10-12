@@ -1,53 +1,59 @@
 <section class="standard-form scrollable">
-  <div class="form-group">
-    <label>{{localize "SITAWARE.MarkerStyle.Preset.Name"}}</label>
-    <div class="form-fields">
-      <select data-preset>
-        {{selectOptions presets selected=preset blank=(localize "SITAWARE.MarkerStyle.Preset.Choose") localize=true}}
-      </select>
+  {{#each kinds as |kind|}}
+  <section class="tab standard-form {{kind.cssClass}}" data-tab="{{kind.id}}" data-group="{{kind.group}}">
+    <p class="hint">{{localize kind.hint}}</p>
+
+    <div class="form-group">
+      <label>{{localize "SITAWARE.MarkerStyle.Preset.Name"}}</label>
+      <div class="form-fields">
+        <select data-preset="{{kind.id}}">
+          {{selectOptions @root.presets selected=kind.preset blank=(localize "SITAWARE.MarkerStyle.Preset.Choose") localize=true}}
+        </select>
+      </div>
+      <p class="hint">{{localize "SITAWARE.MarkerStyle.Preset.Hint"}}</p>
     </div>
-    <p class="hint">{{localize "SITAWARE.MarkerStyle.Preset.Hint"}}</p>
-  </div>
 
-  <fieldset>
-    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Color"}}</legend>
-    {{formGroup fields.colorMode value=style.colorMode label=(localize "SITAWARE.MarkerStyle.colorMode.Name") localize=true}}
-    {{formGroup fields.color value=style.color label=(localize "SITAWARE.MarkerStyle.color.Name") hint=(localize "SITAWARE.MarkerStyle.color.Hint")}}
-    {{formGroup fields.opacity value=style.opacity label=(localize "SITAWARE.MarkerStyle.opacity.Name")}}
-    {{formGroup fields.scale value=style.scale label=(localize "SITAWARE.MarkerStyle.scale.Name") hint=(localize "SITAWARE.MarkerStyle.scale.Hint")}}
-  </fieldset>
+    <fieldset>
+      <legend>{{localize "SITAWARE.MarkerStyle.Sections.Color"}}</legend>
+      {{formGroup kind.fields.colorMode value=kind.style.colorMode label=(localize "SITAWARE.MarkerStyle.colorMode.Name") localize=true}}
+      {{formGroup kind.fields.color value=kind.style.color label=(localize "SITAWARE.MarkerStyle.color.Name") hint=(localize "SITAWARE.MarkerStyle.color.Hint")}}
+      {{formGroup kind.fields.opacity value=kind.style.opacity label=(localize "SITAWARE.MarkerStyle.opacity.Name")}}
+      {{formGroup kind.fields.scale value=kind.style.scale label=(localize "SITAWARE.MarkerStyle.scale.Name") hint=(localize "SITAWARE.MarkerStyle.scale.Hint")}}
+    </fieldset>
 
-  <fieldset>
-    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Shape"}}</legend>
-    {{formGroup fields.shape value=style.shape label=(localize "SITAWARE.MarkerStyle.shape.Name") localize=true}}
-    {{formGroup fields.ring value=style.ring label=(localize "SITAWARE.MarkerStyle.ring.Name") localize=true}}
-    {{formGroup fields.ringWidth value=style.ringWidth label=(localize "SITAWARE.MarkerStyle.ringWidth.Name") hint=(localize "SITAWARE.MarkerStyle.ringWidth.Hint")}}
-    {{formGroup fields.fillOpacity value=style.fillOpacity label=(localize "SITAWARE.MarkerStyle.fillOpacity.Name") hint=(localize "SITAWARE.MarkerStyle.fillOpacity.Hint")}}
-  </fieldset>
+    <fieldset>
+      <legend>{{localize "SITAWARE.MarkerStyle.Sections.Shape"}}</legend>
+      {{formGroup kind.fields.shape value=kind.style.shape label=(localize "SITAWARE.MarkerStyle.shape.Name") localize=true}}
+      {{formGroup kind.fields.ring value=kind.style.ring label=(localize "SITAWARE.MarkerStyle.ring.Name") localize=true}}
+      {{formGroup kind.fields.ringWidth value=kind.style.ringWidth label=(localize "SITAWARE.MarkerStyle.ringWidth.Name") hint=(localize "SITAWARE.MarkerStyle.ringWidth.Hint")}}
+      {{formGroup kind.fields.fillOpacity value=kind.style.fillOpacity label=(localize "SITAWARE.MarkerStyle.fillOpacity.Name") hint=(localize "SITAWARE.MarkerStyle.fillOpacity.Hint")}}
+    </fieldset>
 
-  <fieldset>
-    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Heading"}}</legend>
-    {{formGroup fields.showHeading value=style.showHeading label=(localize "SITAWARE.MarkerStyle.showHeading.Name")}}
-    {{formGroup fields.headingStyle value=style.headingStyle label=(localize "SITAWARE.MarkerStyle.headingStyle.Name") localize=true}}
-  </fieldset>
+    <fieldset>
+      <legend>{{localize "SITAWARE.MarkerStyle.Sections.Heading"}}</legend>
+      {{formGroup kind.fields.showHeading value=kind.style.showHeading label=(localize "SITAWARE.MarkerStyle.showHeading.Name")}}
+      {{formGroup kind.fields.headingStyle value=kind.style.headingStyle label=(localize "SITAWARE.MarkerStyle.headingStyle.Name") localize=true}}
+    </fieldset>
 
-  <fieldset>
-    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Image"}}</legend>
-    {{formGroup fields.image value=style.image label=(localize "SITAWARE.MarkerStyle.image.Name") localize=true}}
-    {{formGroup fields.imagePath value=style.imagePath label=(localize "SITAWARE.MarkerStyle.imagePath.Name") hint=(localize "SITAWARE.MarkerStyle.imagePath.Hint")}}
-    {{formGroup fields.imageOpacity value=style.imageOpacity label=(localize "SITAWARE.MarkerStyle.imageOpacity.Name")}}
-    {{formGroup fields.desaturate value=style.desaturate label=(localize "SITAWARE.MarkerStyle.desaturate.Name")}}
-  </fieldset>
+    <fieldset>
+      <legend>{{localize "SITAWARE.MarkerStyle.Sections.Image"}}</legend>
+      {{formGroup kind.fields.image value=kind.style.image label=(localize "SITAWARE.MarkerStyle.image.Name") localize=true}}
+      {{formGroup kind.fields.imagePath value=kind.style.imagePath label=(localize "SITAWARE.MarkerStyle.imagePath.Name") hint=(localize "SITAWARE.MarkerStyle.imagePath.Hint")}}
+      {{formGroup kind.fields.imageOpacity value=kind.style.imageOpacity label=(localize "SITAWARE.MarkerStyle.imageOpacity.Name")}}
+      {{formGroup kind.fields.desaturate value=kind.style.desaturate label=(localize "SITAWARE.MarkerStyle.desaturate.Name")}}
+    </fieldset>
 
-  <fieldset>
-    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Label"}}</legend>
-    {{formGroup fields.label value=style.label label=(localize "SITAWARE.MarkerStyle.label.Name") localize=true}}
-    {{formGroup fields.labelText value=style.labelText label=(localize "SITAWARE.MarkerStyle.labelText.Name") hint=(localize "SITAWARE.MarkerStyle.labelText.Hint")}}
-  </fieldset>
+    <fieldset>
+      <legend>{{localize "SITAWARE.MarkerStyle.Sections.Label"}}</legend>
+      {{formGroup kind.fields.label value=kind.style.label label=(localize "SITAWARE.MarkerStyle.label.Name") localize=true}}
+      {{formGroup kind.fields.labelText value=kind.style.labelText label=(localize "SITAWARE.MarkerStyle.labelText.Name") hint=(localize "SITAWARE.MarkerStyle.labelText.Hint")}}
+    </fieldset>
 
-  <fieldset>
-    <legend>{{localize "SITAWARE.MarkerStyle.Sections.Animation"}}</legend>
-    {{formGroup fields.animation value=style.animation label=(localize "SITAWARE.MarkerStyle.animation.Name") localize=true}}
-    {{formGroup fields.animationSpeed value=style.animationSpeed label=(localize "SITAWARE.MarkerStyle.animationSpeed.Name") hint=(localize "SITAWARE.MarkerStyle.animationSpeed.Hint")}}
-  </fieldset>
+    <fieldset>
+      <legend>{{localize "SITAWARE.MarkerStyle.Sections.Animation"}}</legend>
+      {{formGroup kind.fields.animation value=kind.style.animation label=(localize "SITAWARE.MarkerStyle.animation.Name") localize=true}}
+      {{formGroup kind.fields.animationSpeed value=kind.style.animationSpeed label=(localize "SITAWARE.MarkerStyle.animationSpeed.Name") hint=(localize "SITAWARE.MarkerStyle.animationSpeed.Hint")}}
+    </fieldset>
+  </section>
+  {{/each}}
 </section>

@@ -13,10 +13,12 @@ export const SETTINGS = Object.freeze({
   PROXIMITY_WALLS: "proximityWallsBlock",
   LAST_KNOWN_ENABLED: "lastKnownEnabled",
   LAST_KNOWN_DISPOSITIONS: "lastKnownDispositions",
+  LAST_KNOWN_ALLIES: "lastKnownAllies",
   LAST_KNOWN_SHARE: "lastKnownShare",
   LAST_KNOWN_LIFETIME: "lastKnownLifetime",
   LAST_KNOWN_GM: "lastKnownShowGM",
-  LAST_KNOWN_STYLE: "lastKnownStyle"
+  LAST_KNOWN_STYLE: "lastKnownStyle",
+  LAST_KNOWN_ALLY_STYLE: "lastKnownAllyStyle"
 });
 
 /**
@@ -29,12 +31,22 @@ export function getSetting(key) {
 }
 
 /**
- * The GM-configured marker style, with defaults filled in for any missing field.
+ * The setting holding each kind of marker style.
+ * @type {Readonly<Record<import("./data/marker-style.mjs").MarkerKind, string>>}
+ */
+export const STYLE_SETTINGS = Object.freeze({
+  enemy: SETTINGS.LAST_KNOWN_STYLE,
+  ally: SETTINGS.LAST_KNOWN_ALLY_STYLE
+});
+
+/**
+ * The GM-configured style for one kind of marker, with defaults filled in for any missing field.
+ * @param {import("./data/marker-style.mjs").MarkerKind} [kind="enemy"]
  * @returns {import("./data/marker-style.mjs").MarkerStyle}
  */
-export function getMarkerStyle() {
-  const defaults = getMarkerStyleField().getInitialValue({});
-  return foundry.utils.mergeObject(defaults, getSetting(SETTINGS.LAST_KNOWN_STYLE) ?? {}, {inplace: false});
+export function getMarkerStyle(kind="enemy") {
+  const defaults = getMarkerStyleField(kind).getInitialValue({});
+  return foundry.utils.mergeObject(defaults, getSetting(STYLE_SETTINGS[kind]) ?? {}, {inplace: false});
 }
 
 /* -------------------------------------------- */
@@ -78,6 +90,7 @@ export function registerSettings({refreshVisibility, refreshMarkers}) {
       all: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_DISPOSITIONS}.All`
     }
   });
+  register(SETTINGS.LAST_KNOWN_ALLIES, {scope: "world", type: Boolean, default: true, onChange: refreshMarkers});
   register(SETTINGS.LAST_KNOWN_SHARE, {scope: "world", type: Boolean, default: true});
   register(SETTINGS.LAST_KNOWN_LIFETIME, {
     scope: "world", type: Number, default: 0, range: {min: 0, max: 100, step: 1}, onChange: refreshMarkers
@@ -85,14 +98,16 @@ export function registerSettings({refreshVisibility, refreshMarkers}) {
   register(SETTINGS.LAST_KNOWN_GM, {scope: "client", type: Boolean, default: false, onChange: refreshMarkers});
 
   // Marker appearance, edited by the GM through its own form rather than the settings list
-  const styleField = getMarkerStyleField();
-  game.settings.register(MODULE_ID, SETTINGS.LAST_KNOWN_STYLE, {
-    scope: "world",
-    config: false,
-    type: styleField,
-    default: styleField.getInitialValue({}),
-    onChange: refreshMarkers
-  });
+  for ( const [kind, key] of Object.entries(STYLE_SETTINGS) ) {
+    const styleField = getMarkerStyleField(kind);
+    game.settings.register(MODULE_ID, key, {
+      scope: "world",
+      config: false,
+      type: styleField,
+      default: styleField.getInitialValue({}),
+      onChange: refreshMarkers
+    });
+  }
   game.settings.registerMenu(MODULE_ID, `${SETTINGS.LAST_KNOWN_STYLE}Menu`, {
     name: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_STYLE}.Name`,
     label: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_STYLE}.Label`,

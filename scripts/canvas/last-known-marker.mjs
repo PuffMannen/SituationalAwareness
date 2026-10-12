@@ -8,6 +8,7 @@
  * @property {number} height           Token height in pixels
  * @property {number|null} direction   Heading of travel in radians, or null if never seen moving
  * @property {number} disposition      The token disposition, used for the marker color
+ * @property {boolean} [ally]          Whether the token was an ally, which selects the ally marker style
  * @property {string|null} img         Token texture path, used when the style shows the token image
  * @property {number} worldTime        game.time.worldTime at the sighting
  * @property {{id: string, round: number}|null} combat   Active combat at the sighting

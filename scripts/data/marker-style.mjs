@@ -79,23 +79,32 @@ export const MARKER_STYLE_CHOICES = Object.freeze({
 });
 
 /**
- * The shared schema instance, created on first use once Foundry's field classes are available.
- * @type {foundry.data.fields.SchemaField|null}
+ * The kinds of marker, each with its own style setting.
+ * "enemy" covers every tracked token which is not an ally.
+ * @typedef {"enemy"|"ally"} MarkerKind
  */
-let markerStyleField = null;
 
 /**
- * The schema describing how last known position markers look.
- * Used as the type of the world setting, so stored values are cleaned and validated by core.
+ * Schema instances by marker kind, created on first use once Foundry's field classes are available.
+ * Both kinds share the same defaults. Each still needs its own instance, because core binds a
+ * setting's type to that setting's path.
+ * @type {Partial<Record<MarkerKind, foundry.data.fields.SchemaField>>}
+ */
+const markerStyleFields = {};
+
+/**
+ * The schema describing how one kind of last known position marker looks.
+ * Used as the type of that kind's world setting, so stored values are cleaned and validated by core.
+ * @param {MarkerKind} [kind="enemy"]
  * @returns {foundry.data.fields.SchemaField}
  */
-export function getMarkerStyleField() {
-  markerStyleField ??= createMarkerStyleField();
-  return markerStyleField;
+export function getMarkerStyleField(kind="enemy") {
+  markerStyleFields[kind] ??= createMarkerStyleField();
+  return markerStyleFields[kind];
 }
 
 /**
- * Construct the marker style schema.
+ * Construct a marker style schema.
  * @returns {foundry.data.fields.SchemaField}
  */
 function createMarkerStyleField() {

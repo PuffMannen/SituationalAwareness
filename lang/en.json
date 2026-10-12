@@ -26,10 +26,14 @@
       },
       "lastKnownDispositions": {
         "Name": "Tracked Tokens",
-        "Hint": "Which tokens leave a last known position marker. Tokens you own are never tracked.",
+        "Hint": "Which tokens other than allies leave a last known position marker. Tokens you own are never tracked.",
         "Hostile": "Hostile tokens",
         "HostileNeutral": "Hostile and neutral tokens",
-        "All": "All tokens you do not own"
+        "All": "All other tokens"
+      },
+      "lastKnownAllies": {
+        "Name": "Track Allies",
+        "Hint": "Leave a marker when an allied token you do not own leaves your sight. Allies are player-owned or friendly tokens, and their markers have their own style."
       },
       "lastKnownShare": {
         "Name": "Share Sightings With Party",
@@ -46,7 +50,7 @@
       "lastKnownStyle": {
         "Name": "Marker Appearance",
         "Label": "Customize Markers",
-        "Hint": "Choose how last known position markers look for every player: color, outline, image, label, size and opacity."
+        "Hint": "Choose how last known position markers look for every player, with separate styles for enemies and allies."
       }
     },
     "Keybindings": {
@@ -69,10 +73,18 @@
     "MarkerStyle": {
       "Title": "Last Known Position Markers",
       "Reset": "Reset to Defaults",
+      "Tabs": {
+        "enemy": "Enemies",
+        "ally": "Allies"
+      },
+      "TabHints": {
+        "enemy": "Markers for every tracked token that is not an ally.",
+        "ally": "Markers for allies: player-owned or friendly tokens you do not own."
+      },
       "Preset": {
         "Name": "Preset",
         "Choose": "Choose a preset",
-        "Hint": "Fill in the form with a ready-made style for a kind of game world. Adjust it if you like, then save."
+        "Hint": "Fill in this tab with a ready-made style for a kind of game world. Adjust it if you like, then save."
       },
       "Presets": {
         "Classic": "Classic",
