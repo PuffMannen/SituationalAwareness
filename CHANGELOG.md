@@ -7,6 +7,7 @@
 - A large heading arrow through the marker, as an alternative to the small arrowhead.
 - Marker animations: pulsing fade, pulsing size, pulsing glow and rotation.
 - Fixed: saving the marker dialog had no effect, so markers always used the default style.
+- Fixed: the marker dialog could not scroll when it was taller than the screen.
 - Removed trailing fog to keep the module focused. Its settings are no longer registered, and saved fog exploration was never changed by it, so nothing needs cleaning up.
 
 ## 0.2.0
