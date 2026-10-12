@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Foundry VTT V14 is now the minimum version. V13 was never tested.
 - Marker presets for different game worlds: Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker and Minimal. Picking one fills in the marker dialog.
 - New marker shapes: square, diamond, triangle, hexagon, star, pentagram, target cross and target bullseye. The outline can be dashed, solid or none for any shape, and the shape can be filled.
 - A large heading arrow through the marker, as an alternative to the small arrowhead.

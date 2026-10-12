@@ -2,7 +2,7 @@
 
 A Foundry Virtual Tabletop module that extends Fog of War with tools that help players keep track of the battlefield.
 
-Targets Foundry VTT V13 and V14. It is built only on the public client API: hooks, settings, user flags, the module socket and `CONFIG.Token.objectClass`.
+Requires Foundry VTT V14. It is built only on the public client API: hooks, settings, user flags, the module socket and `CONFIG.Token.objectClass`.
 
 ## Features
 
