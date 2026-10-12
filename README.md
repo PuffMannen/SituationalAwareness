@@ -64,11 +64,14 @@ api.refresh();                // Re-evaluate all features
 
 ## Development
 
-Link the folder into your Foundry data directory so the module id matches the folder name:
+Build the package into the ignored `situational-awareness/` folder, or build it and install it into a local Foundry:
 
 ```sh
-ln -s "$(pwd)" "<FoundryData>/Data/modules/situational-awareness"
+npm run build
+npm run deploy
 ```
+
+Deploy replaces `Data/modules/situational-awareness` in the Foundry user data folder. It defaults to the macOS desktop app location. Set `FOUNDRY_DATA` to use another folder. Reload the world in each client afterwards.
 
 Lint with ESLint:
 
@@ -81,6 +84,7 @@ npm run lint
 
 ```
 module.json                          Manifest
+tools/build.mjs                      Build and deploy script
 lang/en.json                         English strings
 scripts/main.mjs                     Entry point: hooks, keybinding, scene control, API
 scripts/settings.mjs                 Setting registration

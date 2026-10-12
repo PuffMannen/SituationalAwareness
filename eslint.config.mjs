@@ -30,5 +30,19 @@ export default [
       "no-var": "error",
       "eqeqeq": ["error", "smart"]
     }
+  },
+  {
+    files: ["tools/**/*.mjs"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: globals.node
+    },
+    rules: {
+      "indent": ["error", 2, {SwitchCase: 1}],
+      "quotes": ["error", "double", {avoidEscape: true}],
+      "semi": ["error", "always"],
+      "prefer-const": "error"
+    }
   }
 ];
