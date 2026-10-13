@@ -19,13 +19,16 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check the tag matches the manifest version
+      - name: Check the tag matches the version in module.json and package.json
         run: |
           version=$(node -p "require('./module.json').version")
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match module.json version $version"
-            exit 1
-          fi
+          for file in module.json package.json; do
+            found=$(node -p "require('./$file').version")
+            if [ "v$found" != "$GITHUB_REF_NAME" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME does not match $file version $found"
+              exit 1
+            fi
+          done
           echo "VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Take the release notes from the changelog

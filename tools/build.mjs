@@ -14,7 +14,7 @@
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const MANIFEST = JSON.parse(readFileSync(join(ROOT, "module.json"), "utf8"));
@@ -32,7 +32,7 @@ const ZIP_FILE = join(ROOT, "module.zip");
  * @param {string} target    Module folder to replace. Its name must be the module id.
  */
 function copyPackage(source, target) {
-  if ( !target.endsWith(`/${MODULE_ID}`) ) throw new Error(`Refusing to replace ${target}`);
+  if ( basename(target) !== MODULE_ID ) throw new Error(`Refusing to replace ${target}`);
   rmSync(target, {recursive: true, force: true});
   for ( const file of PACKAGE_FILES ) {
     cpSync(join(source, file), join(target, file), {recursive: true});
