@@ -1,67 +1,97 @@
 # Situational Awareness
 
-A Foundry Virtual Tabletop module that extends Fog of War with tools that help players keep track of the battlefield.
+Fog of War hides what your players can't see. Situational Awareness helps them remember what they *did* see.
 
-Requires Foundry VTT V14. It is built only on the public client API: hooks, settings, user flags, the module socket and `CONFIG.Token.objectClass`.
+When an enemy slips out of sight, a marker stays where it was last seen, pointing the way it was heading and showing how long ago that was. Allies standing right next to you stay visible, even around a corner or in the dark. The table spends less time asking "wait, where was the orc?" and more time playing.
 
-## Features
+<!-- Screenshots of markers and proximity awareness go here. -->
 
-### Last known positions
+- **Last known positions:** a marker where each enemy was last seen, with its heading and time since.
+- **Shared sightings:** what one player sees, the whole party knows.
+- **Proximity awareness:** allies within a few squares never vanish into the fog.
+- **Your look, your world:** nine ready-made marker styles, from Western to Horror, and full control over every detail.
+- **System agnostic:** built to work with any game system on Foundry VTT V14.
 
-When a tracked token leaves your sight, a marker stays where you last saw it.
+## Installation
 
-- A dashed ring in the token's disposition color, with a faded ghost of its image.
-- An arrow showing the direction it was moving when you last saw it.
-- A label with how many rounds ago it was seen. Outside combat, elapsed game time is converted to rounds.
-- The marker disappears as soon as the token is seen again, or when it is deleted.
-- When you see a marked spot again and the token is gone, the marker fades out after a short delay. This only happens once the spot has been out of your sight, so a token slipping around a corner still leaves its marker.
-- Markers are saved in your user flags, so they survive reloads and scene changes.
-- With sharing enabled, a sighting by one player reaches every other player. A newer sighting replaces an older one.
-- Tokens hidden by the GM do not leave a marker.
-- Allies, meaning player-owned or friendly tokens you do not own, can leave markers too. Turn this on or off with Track Allies.
+In Foundry, open **Add-on Modules** and click **Install Module**. Search for Situational Awareness, or paste this manifest URL:
 
-The GM decides how markers look for everyone. Open Configure Settings, find Situational Awareness and click Customize Markers. Enemies and allies each have their own tab with the same options.
+```
+https://github.com/PuffMannen/SituationalAwareness/releases/latest/download/module.json
+```
 
-Start from a preset to match your game world: Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker or Minimal. A preset fills in the form, and you can adjust any field before saving. The dialog controls:
+Then enable the module in your world under **Manage Modules**. Both features are on by default.
 
-- **Color:** the token's disposition color, or one custom color.
+## Last known positions
+
+When a token you're tracking leaves your sight, a marker appears where you last saw it.
+
+- A faded ghost of the token's image inside a ring in its disposition color, so you know who it was.
+- An arrow showing which way it was moving.
+- A label with how many rounds ago you saw it. Outside combat, elapsed game time counts as rounds.
+
+The marker goes away when you see the token again, or when it's deleted. If you look back at the marked spot and the token isn't there, the marker fades out after a short delay. That only happens once the spot has been out of your sight, so an enemy ducking around a corner still leaves its marker.
+
+Markers are saved per player, so they survive reloads and scene changes. With sharing on, a sighting by one player reaches the whole party, and the newest sighting of a token wins. Tokens the GM hides are removed from play, not lost from sight, so they never leave a marker.
+
+By default only hostile tokens are tracked. You can track neutral tokens too, and allies you don't own, which get their own marker style.
+
+To clear every marker on a scene, use the button in the Token controls, or bind a key under **Configure Controls**.
+
+### Customizing markers
+
+As GM, open **Configure Settings**, find Situational Awareness and click **Customize Markers**. Enemies and allies each have a tab, so you can tell them apart at a glance.
+
+Start from a preset that matches your game: Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker or Minimal. A preset fills in the form, and you can adjust anything before saving. You control:
+
+- **Color:** the token's disposition color, or one color of your choice.
 - **Size and opacity** of the whole marker.
 - **Shape:** circle, square, diamond, triangle, hexagon, star, pentagram, target cross or target bullseye.
-- **Outline:** dashed, solid or none, and its thickness. An optional fill colors the inside of the shape.
+- **Outline:** dashed, solid or none, its thickness, and an optional fill.
 - **Heading arrow:** off, a small arrowhead on the edge, or a large arrow through the marker.
-- **Image:** the token's own image, a custom image such as a question mark, or none. Opacity and grayscale are adjustable.
-- **Label:** time since seen, custom text, or none. Custom text can include `{rounds}` for the age in rounds.
-- **Animation:** none, pulsing fade, pulsing size, pulsing glow or rotation, with an adjustable cycle length.
+- **Image:** the token's own image, a custom image such as a question mark, or none, with adjustable opacity and grayscale.
+- **Label:** time since seen, your own text, or none. Your text can include `{rounds}` for the age in rounds.
+- **Animation:** none, pulsing fade, pulsing size, pulsing glow or rotation, at the speed you choose.
 
-Changes apply to every connected player as soon as the GM saves.
+Saving updates the markers for every connected player straight away.
 
-Clear all markers on a scene with the button in the Token controls, or bind a key under Configure Controls.
+## Proximity awareness
 
-### Proximity awareness
+Allied tokens close to one of your tokens stay visible, even outside your line of sight or in darkness. You always know where the people standing next to you are. A sensed ally is tinted like explored fog, so it's clear you're aware of it rather than seeing it.
 
-Allied tokens within a set range of one of your tokens stay visible, even around corners or in darkness. You choose whether this covers player-owned tokens, friendly tokens or all tokens, and whether walls block it. Tokens with a secret disposition are never revealed.
+Choose the range, whether it covers player-owned tokens, friendly tokens or all tokens, and whether walls block it. Tokens with a secret disposition are never revealed.
 
 ## Settings
 
-| Setting | Scope | Default |
+All settings are under **Configure Settings → Situational Awareness**.
+
+| Setting | Default | What it does |
 | --- | --- | --- |
-| Proximity Awareness | World | On |
-| Proximity Range | World | 2 grid spaces |
-| Proximity Targets | World | Player-owned and friendly |
-| Walls Block Proximity | World | Off |
-| Last Known Positions | World | On |
-| Tracked Tokens | World | Hostile |
-| Track Allies | World | On |
-| Share Sightings With Party | World | On |
-| Marker Lifetime | World | 0, meaning never expire |
-| Clear Empty Markers | World | On |
-| Clear Delay | World | 2 seconds |
-| Show Markers to GM | Client | Off |
-| Marker Appearance | World, GM only | Dashed ring, token image, time label, for enemies and allies alike |
+| Proximity Awareness | On | Keep nearby allies visible. |
+| Proximity Range | 2 grid spaces | How close an ally must be, measured between token centers. |
+| Proximity Targets | Player-owned and friendly | Which tokens proximity keeps visible. |
+| Walls Block Proximity | Off | A sight-blocking wall between two tokens cancels proximity. |
+| Last Known Positions | On | Leave markers where tracked tokens were last seen. |
+| Tracked Tokens | Hostile | Which tokens other than allies leave markers: hostile, hostile and neutral, or all. |
+| Track Allies | On | Leave markers for allies you don't own. |
+| Share Sightings With Party | On | Share each player's markers with every other player. |
+| Marker Lifetime | 0 (never) | Remove markers after this many rounds. |
+| Clear Empty Markers | On | Fade out a marker when you see its spot again and the token is gone. |
+| Clear Delay | 2 seconds | How long an empty spot must stay in view before its marker fades. |
+| Show Markers to GM | Off | Let the GM get markers while controlling tokens. Set per GM client. The GM's markers are never shared with players. |
+| Customize Markers | Dashed ring, ghost image, time label | How markers look for every player, for enemies and allies. |
 
-## API
+Every setting except Show Markers to GM applies to the whole world, and only the GM can change it.
 
-Other modules and macros can use `game.modules.get("situational-awareness").api`:
+## Good to know
+
+- Each player's markers come from their own vision. Two players who see differently can have different markers for the same token.
+- Proximity is measured in a straight line between token centers, not with the grid's diagonal rules.
+- The GM gets no markers unless Show Markers to GM is on, and then only while controlling a token, because with no token selected the GM sees everything.
+
+## For macro and module authors
+
+Other modules and macros can use the module's API:
 
 ```js
 const api = game.modules.get("situational-awareness").api;
@@ -71,74 +101,12 @@ api.isProximityAware(token);  // Whether proximity keeps this token visible
 api.refresh();                // Re-evaluate all features
 ```
 
-## Development
+Building, testing and releasing the module is covered in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Build the package into the ignored `situational-awareness/` folder, or build it and install it into a local Foundry:
+## Support
 
-```sh
-npm run build
-npm run deploy
-```
-
-Deploy replaces `Data/modules/situational-awareness` in the Foundry user data folder. It defaults to the macOS desktop app location. Set `FOUNDRY_DATA` to use another folder. Reload the world in each client afterwards.
-
-### Releasing
-
-1. Set the new version in `module.json` and `package.json`.
-2. Rename the changelog's Unreleased heading to that version, such as `## 1.0.0`.
-3. Commit, then tag and push: `git tag v1.0.0 && git push origin main v1.0.0`.
-
-The Release workflow checks that the tag matches the manifest version, builds `module.zip` and publishes a GitHub release with `module.json` and `module.zip` attached. The release notes come from the changelog section. Foundry finds the latest release through the manifest link, which only works while the repository is public.
-
-To build the zip locally, run `npm run zip`.
-
-Lint with ESLint:
-
-```sh
-npm install
-npm run lint
-```
-
-### Layout
-
-```
-module.json                          Manifest
-tools/build.mjs                      Build, zip and deploy script
-.github/workflows/release.yml        Publishes a release for each version tag
-lang/en.json                         English strings
-scripts/main.mjs                     Entry point: hooks, keybinding, scene control, API
-scripts/settings.mjs                 Setting registration
-scripts/constants.mjs                Module id, socket name
-scripts/helpers/observers.mjs        Which tokens the user sees through, distances, wall tests
-scripts/helpers/cache.mjs            Values computed once per task, such as settings read during a refresh
-scripts/features/proximity-awareness.mjs
-scripts/features/last-known-positions.mjs
-scripts/canvas/last-known-marker.mjs PIXI marker graphic
-scripts/data/marker-style.mjs        Marker style schema
-scripts/data/marker-presets.mjs      Ready-made marker styles
-scripts/apps/marker-style-config.mjs GM dialog for the marker style
-templates/marker-style-config.hbs    Template for that dialog
-```
-
-### How it hooks in
-
-- **Proximity awareness** extends `CONFIG.Token.objectClass` during `setup`, after systems have registered their own Token class. It overrides only the `isVisible` getter and defers to core first. Core draws token images beneath the fog, so a revealed ally also gets a detection filter, the same mechanism core uses for tremorsense. Core then draws a copy above the fog, tinted like explored fog.
-- **Last known positions** draws its markers just above the token layer, because visible tokens erase their footprint from anything beneath it. It listens to `refreshToken` and records a sighting when a token's `visible` flips from true to false. It ignores transitions for half a second after the canvas loads, while vision initializes.
-
-## Manual test checklist
-
-1. As a player, move a token so a hostile token leaves line of sight. A marker appears with an arrow along its last movement.
-2. Move back into sight. The marker disappears.
-3. Reload. Markers that were still active are restored.
-4. With two players connected, one loses sight of a hostile. The other player sees the marker unless they can currently see that token.
-5. Place a friendly token behind a wall within range. It stays visible. Enable Walls Block Proximity and it disappears.
-6. As GM with no token selected, nothing from this module is drawn.
-
-## Known limitations
-
-- Proximity is measured between token centers in straight-line grid spaces, not with the grid's diagonal rules.
-- Sightings are recorded by each client from its own vision. Two players with different vision may record different positions for the same token.
+Found a bug or have an idea? Open an issue at [github.com/PuffMannen/SituationalAwareness/issues](https://github.com/PuffMannen/SituationalAwareness/issues).
 
 ## License
 
-Released under the [MIT License](LICENSE). Foundry Virtual Tabletop itself and its API are covered by Foundry's own terms.
+Released under the [MIT License](LICENSE). Foundry Virtual Tabletop itself is covered by Foundry's own terms.
