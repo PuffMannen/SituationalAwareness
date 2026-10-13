@@ -1,0 +1,50 @@
+# Publish a release when a version tag such as v1.0.0 is pushed.
+# Bump the version in module.json and package.json and add its changelog section before tagging.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check the tag matches the version in module.json and package.json
+        run: |
+          version=$(node -p "require('./module.json').version")
+          for file in module.json package.json; do
+            found=$(node -p "require('./$file').version")
+            if [ "v$found" != "$GITHUB_REF_NAME" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME does not match $file version $found"
+              exit 1
+            fi
+          done
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Take the release notes from the changelog
+        run: |
+          awk -v heading="## $VERSION" '$0 == heading {found = 1; next} /^## / {found = 0} found' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::CHANGELOG.md has no section for $VERSION"
+            exit 1
+          fi
+
+      - name: Build the package
+        run: node tools/build.mjs --zip
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" situational-awareness/module.json module.zip \
+            --title "$GITHUB_REF_NAME" --notes-file release-notes.md
