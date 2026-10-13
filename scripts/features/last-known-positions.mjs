@@ -1,10 +1,12 @@
 import { I18N, MODULE_ID, SOCKET_NAME } from "../constants.mjs";
 import { SETTINGS, getMarkerStyle, getSetting } from "../settings.mjs";
 import { getRenderedCenter, hasRestrictedVision, isAlly } from "../helpers/observers.mjs";
+import { cachePerTask } from "../helpers/cache.mjs";
 import { LastKnownMarker } from "../canvas/last-known-marker.mjs";
 
 /** @import { LastKnownData } from "../canvas/last-known-marker.mjs" */
-/** @import { MarkerKind } from "../data/marker-style.mjs" */
+/** @import { MarkerKind, MarkerStyle } from "../data/marker-style.mjs" */
+/** @import { TaskCache } from "../helpers/cache.mjs" */
 
 /**
  * The user flag holding persisted sightings, keyed by scene id.
@@ -94,6 +96,36 @@ export class LastKnownPositions {
    */
   static #persistSoon = foundry.utils.debounce(() => this.#persist(), 1000);
 
+  /**
+   * Pending timeout which starts recording sightings after the canvas is ready.
+   * @type {number|null}
+   */
+  static #armTimer = null;
+
+  /**
+   * Saves of sightings shared for other scenes, run one at a time so none overwrites another.
+   * @type {Promise<void>}
+   */
+  static #storeQueue = Promise.resolve();
+
+  /**
+   * Settings which decide which tokens are tracked. Read once per task, because tokens refresh
+   * every frame while they move.
+   * @type {TaskCache<{enabled: boolean, showForGM: boolean, allies: boolean, dispositions: string}>}
+   */
+  static #trackingSettings = cachePerTask(() => ({
+    enabled: getSetting(SETTINGS.LAST_KNOWN_ENABLED),
+    showForGM: getSetting(SETTINGS.LAST_KNOWN_GM),
+    allies: getSetting(SETTINGS.LAST_KNOWN_ALLIES),
+    dispositions: getSetting(SETTINGS.LAST_KNOWN_DISPOSITIONS)
+  }));
+
+  /**
+   * The marker style for each kind, shared by every marker drawn in one task.
+   * @type {TaskCache<Record<MarkerKind, MarkerStyle>>}
+   */
+  static #styles = cachePerTask(() => ({enemy: getMarkerStyle("enemy"), ally: getMarkerStyle("ally")}));
+
   /* -------------------------------------------- */
   /*  Registration                                */
   /* -------------------------------------------- */
@@ -179,13 +211,22 @@ export class LastKnownPositions {
   /* -------------------------------------------- */
 
   /**
-   * Prune expired sightings, then redraw markers and labels. Used when settings or time change.
+   * Prune sightings which expired or whose token is no longer tracked, then redraw markers and
+   * labels. Used when settings or time change.
    */
   static refresh() {
+    this.#trackingSettings.clear();
+    this.#styles.clear();
     if ( !canvas.ready || !this.#container ) return;
-    const tracksAllies = getSetting(SETTINGS.LAST_KNOWN_ALLIES);
     for ( const sighting of Array.from(this.#sightings.values()) ) {
-      if ( this.#isExpired(sighting) || (sighting.ally && !tracksAllies) ) this.#remove(sighting.tokenId);
+      const token = canvas.tokens.get(sighting.tokenId);
+      const kind = token ? this.#kindOf(token) : null;
+      if ( !kind || this.#isExpired(sighting) ) this.#remove(sighting.tokenId);
+      else if ( sighting.ally !== (kind === "ally") ) {
+        sighting.ally = kind === "ally";
+        this.#dirty = true;
+        this.#persistSoon();
+      }
     }
     for ( const marker of this.#markers.values() ) marker.destroy({children: true});
     this.#markers.clear();
@@ -218,7 +259,8 @@ export class LastKnownPositions {
     this.refresh();
 
     // Seed visibility state once vision has settled, then start recording transitions.
-    setTimeout(() => {
+    this.#armTimer = setTimeout(() => {
+      this.#armTimer = null;
       if ( !canvas.ready ) return;
       for ( const token of canvas.tokens.placeables ) {
         this.#states.set(token.id, {visible: token.visible, center: getRenderedCenter(token), direction: null});
@@ -234,6 +276,8 @@ export class LastKnownPositions {
    * Save pending changes and release canvas resources before the scene changes.
    */
   static #onCanvasTearDown() {
+    clearTimeout(this.#armTimer);
+    this.#armTimer = null;
     this.#armed = false;
     if ( this.#dirty ) this.#persist();
     this.#container?.destroy({children: true});
@@ -292,7 +336,8 @@ export class LastKnownPositions {
     if ( token.document.hidden || !state.center ) return;
     const sighting = this.#createSighting(token, state, kind);
     this.#upsert(sighting);
-    if ( getSetting(SETTINGS.LAST_KNOWN_SHARE) ) {
+    // The GM can see through any token, so the GM's sightings would reveal what players never saw.
+    if ( !game.user.isGM && getSetting(SETTINGS.LAST_KNOWN_SHARE) ) {
       game.socket.emit(SOCKET_NAME, {action: "sighting", data: sighting});
     }
   }
@@ -313,22 +358,33 @@ export class LastKnownPositions {
 
   /**
    * Which kind of marker this token leaves when it disappears from view, if any.
-   * Allies are player-owned or friendly tokens. Every other token is tracked by disposition.
+   * Nothing is tracked while the feature is off, or for the GM unless Show for GM is on.
    * @param {foundry.canvas.placeables.Token} token
    * @returns {MarkerKind|null}
    */
   static #trackingKind(token) {
-    if ( !getSetting(SETTINGS.LAST_KNOWN_ENABLED) ) return null;
-    if ( game.user.isGM ) {
-      if ( !getSetting(SETTINGS.LAST_KNOWN_GM) || token.actor?.hasPlayerOwner ) return null;
-    }
-    else if ( token.isOwner ) return null;
+    const {enabled, showForGM} = this.#trackingSettings();
+    if ( !enabled || (game.user.isGM && !showForGM) ) return null;
+    return this.#kindOf(token);
+  }
 
-    if ( isAlly(token) ) return getSetting(SETTINGS.LAST_KNOWN_ALLIES) ? "ally" : null;
+  /* -------------------------------------------- */
+
+  /**
+   * Which kind of marker this token's sightings use, or null if the user does not track it.
+   * Users never track their own tokens, and the GM never tracks player-owned tokens.
+   * Allies are player-owned or friendly tokens. Every other token is tracked by disposition.
+   * @param {foundry.canvas.placeables.Token} token
+   * @returns {MarkerKind|null}
+   */
+  static #kindOf(token) {
+    if ( game.user.isGM ? token.actor?.hasPlayerOwner : token.isOwner ) return null;
+    const {allies, dispositions} = this.#trackingSettings();
+    if ( isAlly(token) ) return allies ? "ally" : null;
     const D = CONST.TOKEN_DISPOSITIONS;
     const disposition = token.document.disposition;
     let tracked;
-    switch ( getSetting(SETTINGS.LAST_KNOWN_DISPOSITIONS) ) {
+    switch ( dispositions ) {
       case "hostile": tracked = disposition === D.HOSTILE; break;
       case "hostileNeutral": tracked = (disposition === D.HOSTILE) || (disposition === D.NEUTRAL); break;
       case "all": tracked = true; break;
@@ -451,12 +507,17 @@ export class LastKnownPositions {
       return;
     }
 
-    // Sighting on another scene: store it for later
-    const stored = game.user.getFlag(MODULE_ID, FLAG_KEY)?.[sighting.sceneId] ?? [];
-    const existing = stored.find(s => s.tokenId === sighting.tokenId);
-    if ( !isNewer(existing) ) return;
-    const updated = stored.filter(s => s.tokenId !== sighting.tokenId).concat([sighting]);
-    await this.#writeScene(sighting.sceneId, updated);
+    // Sighting on another scene: store it for later. Each save waits for the previous one,
+    // so it reads a list which already holds every earlier sighting.
+    const store = async () => {
+      const stored = game.user.getFlag(MODULE_ID, FLAG_KEY)?.[sighting.sceneId] ?? [];
+      const existing = stored.find(s => s.tokenId === sighting.tokenId);
+      if ( !isNewer(existing) ) return;
+      const updated = stored.filter(s => s.tokenId !== sighting.tokenId).concat([sighting]);
+      await this.#writeScene(sighting.sceneId, updated);
+    };
+    this.#storeQueue = this.#storeQueue.then(store);
+    await this.#storeQueue;
   }
 
   /* -------------------------------------------- */
@@ -553,7 +614,7 @@ export class LastKnownPositions {
     if ( !this.#container ) return;
     const marker = this.#container.addChild(new LastKnownMarker(sighting));
     this.#markers.set(sighting.tokenId, marker);
-    marker.draw(getMarkerStyle(sighting.ally ? "ally" : "enemy"))
+    marker.draw(this.#styles()[sighting.ally ? "ally" : "enemy"])
       .catch(err => console.error("Situational Awareness | Failed to draw marker", err));
     marker.setAge(this.#ageInRounds(sighting));
   }

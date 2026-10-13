@@ -15,6 +15,11 @@
 - Marker animations: pulsing fade, pulsing size, pulsing glow and rotation.
 - Fixed: saving the marker dialog had no effect, so markers always used the default style.
 - Fixed: the marker dialog could not scroll when it was taller than the screen.
+- Fixed: with Show Markers to GM on, the GM's sightings were shared with players, revealing enemies they never saw. The GM's markers now stay with the GM.
+- Fixed: shared sightings for another scene could overwrite each other when two arrived at once.
+- Fixed: narrowing Tracked Tokens or turning off Track Allies left old markers for tokens no longer tracked. Markers are checked again whenever settings change.
+- Fixed: changing scene quickly could leave a burst of false markers on the new scene.
+- Proximity awareness and marker tracking read their settings once per refresh instead of once per token, which helps on busy scenes.
 - Removed trailing fog to keep the module focused. Its settings are no longer registered, and saved fog exploration was never changed by it, so nothing needs cleaning up.
 
 ## 0.2.0

@@ -1,5 +1,5 @@
 import { I18N } from "../constants.mjs";
-import { getMarkerStyleField } from "./marker-style.mjs";
+import { completeMarkerStyle } from "./marker-style.mjs";
 
 /** @import { MarkerKind, MarkerStyle } from "./marker-style.mjs" */
 
@@ -87,6 +87,5 @@ export const MARKER_PRESETS = Object.freeze({
  * @returns {MarkerStyle}
  */
 export function getPresetStyle(key, kind="enemy") {
-  const defaults = getMarkerStyleField(kind).getInitialValue({});
-  return foundry.utils.mergeObject(defaults, MARKER_PRESETS[key]?.style ?? {}, {inplace: false});
+  return completeMarkerStyle(MARKER_PRESETS[key]?.style, kind);
 }

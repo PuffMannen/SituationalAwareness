@@ -1,6 +1,9 @@
 import { SETTINGS, getSetting } from "../settings.mjs";
 import { getObservers, getRenderedCenter, gridDistance, isAlly, isSightBlocked } from "../helpers/observers.mjs";
+import { cachePerTask } from "../helpers/cache.mjs";
 import { ExploredFogFilter } from "../canvas/explored-fog-filter.mjs";
+
+/** @import { TaskCache } from "../helpers/cache.mjs" */
 
 /**
  * Proximity awareness: allied tokens close to one of the user's own tokens remain visible,
@@ -14,6 +17,22 @@ export class ProximityAwareness {
    * @type {ExploredFogFilter|null}
    */
   static #detectionFilter = null;
+
+  /**
+   * Settings and observers shared by every token's visibility check in one refresh.
+   * @type {TaskCache<{enabled: boolean, range: number, wallsBlock: boolean, targets: string,
+   *   observers: foundry.canvas.placeables.Token[]}>}
+   */
+  static #context = cachePerTask(() => {
+    const enabled = getSetting(SETTINGS.PROXIMITY_ENABLED);
+    return {
+      enabled,
+      range: getSetting(SETTINGS.PROXIMITY_RANGE),
+      wallsBlock: getSetting(SETTINGS.PROXIMITY_WALLS),
+      targets: getSetting(SETTINGS.PROXIMITY_TARGETS),
+      observers: enabled ? getObservers() : []
+    };
+  });
 
   /* -------------------------------------------- */
 
@@ -63,6 +82,7 @@ export class ProximityAwareness {
    * Ask every token to re-evaluate its visibility on the next render tick.
    */
   static refresh() {
+    this.#context.clear();
     if ( !canvas.ready ) return;
     for ( const token of canvas.tokens.placeables ) token.renderFlags.set({refreshVisibility: true});
   }
@@ -75,15 +95,14 @@ export class ProximityAwareness {
    * @returns {boolean}
    */
   static isAware(token) {
-    if ( !getSetting(SETTINGS.PROXIMITY_ENABLED) ) return false;
+    const {enabled, range, wallsBlock, targets, observers} = this.#context();
+    if ( !enabled ) return false;
     if ( !canvas.visibility?.tokenVision ) return false;
     if ( token.document.hidden ) return false;
-    if ( !this.#isEligible(token) ) return false;
+    if ( !this.#isEligible(token, targets) ) return false;
 
-    const range = getSetting(SETTINGS.PROXIMITY_RANGE);
-    const wallsBlock = getSetting(SETTINGS.PROXIMITY_WALLS);
     const target = getRenderedCenter(token);
-    for ( const observer of getObservers() ) {
+    for ( const observer of observers ) {
       if ( observer === token ) continue;
       const origin = getRenderedCenter(observer);
       if ( gridDistance(origin, target) > range ) continue;
@@ -99,14 +118,15 @@ export class ProximityAwareness {
    * Does this token qualify for proximity awareness under the configured target rule?
    * Secret dispositions never qualify, so proximity cannot leak a secret token.
    * @param {foundry.canvas.placeables.Token} token
+   * @param {string} targets    The configured target rule
    * @returns {boolean}
    */
-  static #isEligible(token) {
+  static #isEligible(token, targets) {
     const D = CONST.TOKEN_DISPOSITIONS;
     const disposition = token.document.disposition;
     if ( disposition === D.SECRET ) return false;
     const isParty = !!token.actor?.hasPlayerOwner;
-    switch ( getSetting(SETTINGS.PROXIMITY_TARGETS) ) {
+    switch ( targets ) {
       case "party": return isParty;
       case "friendly": return isAlly(token);
       case "all": return true;
