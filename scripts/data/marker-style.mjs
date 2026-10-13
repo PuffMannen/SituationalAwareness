@@ -104,6 +104,17 @@ export function getMarkerStyleField(kind="enemy") {
 }
 
 /**
+ * A complete marker style: the given fields, with defaults filled in for any that are missing.
+ * @param {Partial<MarkerStyle>|null|undefined} style
+ * @param {MarkerKind} [kind="enemy"]
+ * @returns {MarkerStyle}
+ */
+export function completeMarkerStyle(style, kind="enemy") {
+  const defaults = getMarkerStyleField(kind).getInitialValue({});
+  return foundry.utils.mergeObject(defaults, style ?? {}, {inplace: false});
+}
+
+/**
  * Construct a marker style schema.
  * @returns {foundry.data.fields.SchemaField}
  */

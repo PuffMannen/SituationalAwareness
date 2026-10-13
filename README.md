@@ -110,6 +110,7 @@ scripts/main.mjs                     Entry point: hooks, keybinding, scene contr
 scripts/settings.mjs                 Setting registration
 scripts/constants.mjs                Module id, socket name
 scripts/helpers/observers.mjs        Which tokens the user sees through, distances, wall tests
+scripts/helpers/cache.mjs            Values computed once per task, such as settings read during a refresh
 scripts/features/proximity-awareness.mjs
 scripts/features/last-known-positions.mjs
 scripts/canvas/last-known-marker.mjs PIXI marker graphic

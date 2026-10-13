@@ -53,7 +53,7 @@
       },
       "lastKnownShowGM": {
         "Name": "Show Markers to GM",
-        "Hint": "Track last known positions for the GM while the GM is controlling tokens."
+        "Hint": "Track last known positions for the GM while the GM is controlling tokens. The GM's markers are never shared with players."
       },
       "lastKnownStyle": {
         "Name": "Marker Appearance",

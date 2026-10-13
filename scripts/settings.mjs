@@ -1,5 +1,5 @@
 import { I18N, MODULE_ID } from "./constants.mjs";
-import { getMarkerStyleField } from "./data/marker-style.mjs";
+import { completeMarkerStyle, getMarkerStyleField } from "./data/marker-style.mjs";
 import { MarkerStyleConfig } from "./apps/marker-style-config.mjs";
 
 /**
@@ -47,8 +47,7 @@ export const STYLE_SETTINGS = Object.freeze({
  * @returns {import("./data/marker-style.mjs").MarkerStyle}
  */
 export function getMarkerStyle(kind="enemy") {
-  const defaults = getMarkerStyleField(kind).getInitialValue({});
-  return foundry.utils.mergeObject(defaults, getSetting(STYLE_SETTINGS[kind]) ?? {}, {inplace: false});
+  return completeMarkerStyle(getSetting(STYLE_SETTINGS[kind]), kind);
 }
 
 /* -------------------------------------------- */
