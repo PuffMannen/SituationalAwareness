@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "node tools/build.mjs",
+    "zip": "node tools/build.mjs --zip",
     "deploy": "node tools/build.mjs --deploy",
     "lint": "eslint scripts tools",
     "lint:fix": "eslint scripts tools --fix"

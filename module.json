@@ -5,10 +5,16 @@
   "version": "0.2.0",
   "authors": [
     {
-      "name": "Paul Schulz"
+      "name": "Paul Schulz",
+      "url": "https://github.com/PuffMannen"
     }
   ],
   "license": "LICENSE",
+  "url": "https://github.com/PuffMannen/SituationalAwareness",
+  "manifest": "https://github.com/PuffMannen/SituationalAwareness/releases/latest/download/module.json",
+  "bugs": "https://github.com/PuffMannen/SituationalAwareness/issues",
+  "readme": "https://github.com/PuffMannen/SituationalAwareness/blob/main/README.md",
+  "changelog": "https://github.com/PuffMannen/SituationalAwareness/blob/main/CHANGELOG.md",
   "compatibility": {
     "minimum": "14",
     "verified": "14"

@@ -82,6 +82,16 @@ npm run deploy
 
 Deploy replaces `Data/modules/situational-awareness` in the Foundry user data folder. It defaults to the macOS desktop app location. Set `FOUNDRY_DATA` to use another folder. Reload the world in each client afterwards.
 
+### Releasing
+
+1. Set the new version in `module.json` and `package.json`.
+2. Rename the changelog's Unreleased heading to that version, such as `## 1.0.0`.
+3. Commit, then tag and push: `git tag v1.0.0 && git push origin main v1.0.0`.
+
+The Release workflow checks that the tag matches the manifest version, builds `module.zip` and publishes a GitHub release with `module.json` and `module.zip` attached. The release notes come from the changelog section. Foundry finds the latest release through the manifest link, which only works while the repository is public.
+
+To build the zip locally, run `npm run zip`.
+
 Lint with ESLint:
 
 ```sh
@@ -93,7 +103,8 @@ npm run lint
 
 ```
 module.json                          Manifest
-tools/build.mjs                      Build and deploy script
+tools/build.mjs                      Build, zip and deploy script
+.github/workflows/release.yml        Publishes a release for each version tag
 lang/en.json                         English strings
 scripts/main.mjs                     Entry point: hooks, keybinding, scene control, API
 scripts/settings.mjs                 Setting registration
