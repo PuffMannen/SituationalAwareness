@@ -105,7 +105,8 @@ Building, testing and releasing the module is covered in [CONTRIBUTING.md](CONTR
 
 ## Support
 
-Found a bug or have an idea? Open an issue at [github.com/PuffMannen/SituationalAwareness/issues](https://github.com/PuffMannen/SituationalAwareness/issues).
+- **Questions, ideas and feedback:** start a thread in [Discussions](https://github.com/PuffMannen/SituationalAwareness/discussions).
+- **Something broken:** open an [issue](https://github.com/PuffMannen/SituationalAwareness/issues). Include your Foundry version, your game system and what you expected to happen.
 
 ## License
 
