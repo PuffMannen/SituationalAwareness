@@ -190,13 +190,17 @@ export class LastKnownPositions {
   /* -------------------------------------------- */
 
   /**
-   * Listen for sightings shared by other users. Called once the game is ready.
+   * Listen for sightings shared by other users, and for fog of war resets. Called once the game
+   * is ready.
    */
   static activateSocket() {
     game.socket.on(SOCKET_NAME, message => {
       if ( message?.action === "sighting" ) this.#receiveSighting(message.data);
       else if ( message?.action === "request" ) this.#answerRequest(message.sceneId);
     });
+    // Core calls no hook when the GM resets fog of war. The server announces each reset to every
+    // connected user with this event, whichever scene they are viewing.
+    game.socket.on("resetFog", data => this.#onFogReset(data?.sceneId));
   }
 
   /* -------------------------------------------- */
@@ -465,6 +469,30 @@ export class LastKnownPositions {
     for ( const token of canvas.tokens.placeables ) {
       if ( token.visible && this.#states.get(token.id)?.visible && this.#trackingKind(token) ) this.#shareSoon(token.id);
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Forget every sighting on a scene whose fog of war the GM reset. The party starts exploring that
+   * scene over, so what they remember of it goes too. Tokens this user can still see are shared
+   * again, so teammates keep markers for what the party sees right now.
+   * @param {string} sceneId
+   */
+  static #onFogReset(sceneId) {
+    if ( !sceneId ) return;
+    this.#pendingStore.delete(sceneId);
+    if ( canvas.ready && (sceneId === canvas.scene?.id) ) {
+      for ( const tokenId of Array.from(this.#sightings.keys()) ) this.#remove(tokenId);
+      for ( const state of this.#states.values() ) state.shared = null;
+      this.#answerRequest(sceneId);
+      return;
+    }
+    // Another scene: drop its saved sightings once any save already under way has finished
+    if ( !game.user.getFlag(MODULE_ID, FLAG_KEY)?.[sceneId] ) return;
+    const forget = () => game.user.update({[`flags.${MODULE_ID}.${FLAG_KEY}.${sceneId}`]: _del})
+      .catch(err => console.error("Situational Awareness | Failed to forget sightings", err));
+    this.#storeQueue = this.#storeQueue.then(forget);
   }
 
   /* -------------------------------------------- */

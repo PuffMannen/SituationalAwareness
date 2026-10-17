@@ -6,6 +6,7 @@
 
 - Shared sightings now reach the party while a token is still in view. Before, teammates only got a marker once the player who saw the token lost sight of it. Markers follow a moving token a few times a second.
 - A player who opens a scene gets markers for tokens their teammates can already see.
+- Resetting a scene's fog of war clears every player's markers for that scene, including players viewing another scene. Tokens a player can still see are shared again straight away.
 - Hiding a token clears its markers for every player, since a hidden token is out of play.
 - Teammates whose computer clocks disagree no longer reject each other's sightings as older.
 

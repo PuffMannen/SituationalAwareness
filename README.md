@@ -36,7 +36,7 @@ Markers are saved per player, so they survive reloads and scene changes. With sh
 
 By default only hostile tokens are tracked. You can track neutral tokens too, and allies you don't own, which get their own marker style.
 
-To clear every marker on a scene, use the button in the Token controls, or bind a key under **Configure Controls**.
+To clear every marker on a scene, use the button in the Token controls, or bind a key under **Configure Controls**. When the GM resets a scene's fog of war, every player's markers for that scene are cleared too.
 
 ### Customizing markers
 
