@@ -26,7 +26,7 @@
       },
       "lastKnownDispositions": {
         "Name": "Tracked Tokens",
-        "Hint": "Which tokens to track for last known position markers.",
+        "Hint": "Which tokens, other than allies, to track for last known position markers.",
         "Hostile": "Hostile tokens",
         "HostileNeutral": "Hostile and neutral tokens",
         "All": "All other tokens"
@@ -87,7 +87,7 @@
       },
       "TabHints": {
         "enemy": "Markers for every tracked token that is not an ally.",
-        "ally": "Markers for allies and friendly tokens."
+        "ally": "Markers for player-owned and friendly tokens."
       },
       "Preset": {
         "Name": "Preset",
