@@ -37,7 +37,7 @@
       },
       "lastKnownShare": {
         "Name": "Share Sightings With Party",
-        "Hint": "When one player loses sight of a token, the marker is shared with every other player."
+        "Hint": "While one player can see a tracked token, every other player sees a marker where it is. When that player loses sight of it, the marker stays where it was last seen."
       },
       "lastKnownLifetime": {
         "Name": "Marker Lifetime (rounds)",

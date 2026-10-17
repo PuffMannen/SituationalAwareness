@@ -32,7 +32,7 @@ When a token you're tracking leaves your sight, a marker appears where you last 
 
 The marker goes away when you see the token again, or when it's deleted. If you look back at the marked spot and the token isn't there, the marker fades out after a short delay. That only happens once the spot has been out of your sight, so an enemy ducking around a corner still leaves its marker.
 
-Markers are saved per player, so they survive reloads and scene changes. With sharing on, a sighting by one player reaches the whole party, and the newest sighting of a token wins. Tokens the GM hides are removed from play, not lost from sight, so they never leave a marker.
+Markers are saved per player, so they survive reloads and scene changes. With sharing on, what one player sees, the whole party knows. While any player can see a tracked token, everyone else sees a marker that follows it. When the last player loses sight of it, the marker stays where it was last seen. The newest sighting of a token wins. Tokens the GM hides are removed from play, not lost from sight, so they never leave a marker, and hiding a token clears any marker it already had.
 
 By default only hostile tokens are tracked. You can track neutral tokens too, and allies you don't own, which get their own marker style.
 
@@ -74,7 +74,7 @@ All settings are under **Configure Settings → Situational Awareness**.
 | Last Known Positions | On | Leave markers where tracked tokens were last seen. |
 | Tracked Tokens | Hostile | Which tokens other than allies leave markers: hostile, hostile and neutral, or all. |
 | Track Allies | On | Leave markers for allies you don't own. |
-| Share Sightings With Party | On | Share each player's markers with every other player. |
+| Share Sightings With Party | On | Show every player a marker for tracked tokens any other player can see or last saw. |
 | Marker Lifetime | 0 (never) | Remove markers after this many rounds. |
 | Clear Empty Markers | On | Fade out a marker when you see its spot again and the token is gone. |
 | Clear Delay | 2 seconds | How long an empty spot must stay in view before its marker fades. |
