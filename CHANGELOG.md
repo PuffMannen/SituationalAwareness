@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2
+
+### Changed
+
+- Adjusted texts in settings, hints and dialogs.
+- Switched wording from Enemies to Hostiles.
+
 ## 0.3.1
 
 ### Fixed
