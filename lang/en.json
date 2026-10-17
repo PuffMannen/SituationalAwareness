@@ -18,7 +18,7 @@
       },
       "proximityWallsBlock": {
         "Name": "Walls Block Proximity",
-        "Hint": "Enable if a sight-blocking wall should prevent proximity detection."
+        "Hint": "Enable if a sight-blocking wall should prevent proximity awareness."
       },
       "lastKnownEnabled": {
         "Name": "Last Known Positions",
@@ -49,7 +49,7 @@
       },
       "lastKnownClearDelay": {
         "Name": "Clear Delay (seconds)",
-        "Hint": "How long an empty marker must stay in view before fading out."
+        "Hint": "How long an empty marked spot must stay in view before its marker fades out."
       },
       "lastKnownShowGM": {
         "Name": "Show Markers to Game Master",
@@ -82,7 +82,7 @@
       "Title": "Last Known Position Markers",
       "Reset": "Reset to Defaults",
       "Tabs": {
-        "enemy": "Enemies",
+        "enemy": "Hostiles",
         "ally": "Allies"
       },
       "TabHints": {
