@@ -1,6 +1,6 @@
 # Situational Awareness
 
-A Foundry VTT module that marks where enemies were last seen and which way they went, and keeps nearby allies visible through the fog of war.
+A Foundry VTT module that marks where hostiles were last seen and which way they went, and keeps nearby allies visible through the fog of war.
 
 ![Last known position markers in Foundry VTT: dashed rings with heading arrows and "Just now" labels where tokens left the players' sight](docs/situational-awareness.png)
 
@@ -26,7 +26,7 @@ By default only hostile tokens are tracked. Neutral tokens and allies you don't 
 
 ### Customizing markers
 
-As GM, click **Customize Markers** in the module settings. Enemies and allies each have their own tab. Start from a preset (Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker or Minimal), then adjust color, size, shape, outline, heading arrow, image, label and animation.
+As GM, click **Customize Markers** in the module settings. Hostiles and allies each have their own tab. Start from a preset (Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker or Minimal), then adjust color, size, shape, outline, heading arrow, image, label and animation.
 
 ## Proximity awareness
 
@@ -47,9 +47,9 @@ Allies close to one of your tokens stay visible, even around corners or in darkn
 | Marker Lifetime | 0 (never) | Remove markers after this many rounds. |
 | Clear Empty Markers | On | Fade out a marker when its spot is seen empty. |
 | Clear Delay | 2 seconds | How long an empty spot must stay in view first. |
-| Show Markers to GM | Off | Give the GM markers while controlling tokens. Never shared. |
+| Show Markers to Game Master | Off | Give the GM markers while controlling tokens. Never shared. |
 
-Show Markers to GM is set per client. All other settings are world settings, changed by the GM.
+Show Markers to Game Master is set per client. All other settings are world settings, changed by the GM.
 
 ## Good to know
 
