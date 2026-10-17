@@ -1,6 +1,6 @@
 # Situational Awareness
 
-A Foundry VTT module that marks where enemies were last seen and which way they went, and keeps nearby allies visible through the fog of war.
+A Foundry VTT module that marks where hostiles were last seen and which way they went, and keeps nearby allies visible through the fog of war.
 
 ![Last known position markers in Foundry VTT: dashed rings with heading arrows and "Just now" labels where tokens left the players' sight](docs/situational-awareness.png)
 
