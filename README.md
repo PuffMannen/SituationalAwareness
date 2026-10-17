@@ -47,9 +47,9 @@ Allies close to one of your tokens stay visible, even around corners or in darkn
 | Marker Lifetime | 0 (never) | Remove markers after this many rounds. |
 | Clear Empty Markers | On | Fade out a marker when its spot is seen empty. |
 | Clear Delay | 2 seconds | How long an empty spot must stay in view first. |
-| Show Markers to GM | Off | Give the GM markers while controlling tokens. Never shared. |
+| Show Markers to Game Master | Off | Give the GM markers while controlling tokens. Never shared. |
 
-Show Markers to GM is set per client. All other settings are world settings, changed by the GM.
+Show Markers to Game Master is set per client. All other settings are world settings, changed by the GM.
 
 ## Good to know
 

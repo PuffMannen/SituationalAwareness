@@ -3,62 +3,62 @@
     "Settings": {
       "proximityEnabled": {
         "Name": "Proximity Awareness",
-        "Hint": "Allied tokens close to one of your tokens stay visible, even outside line of sight or in darkness."
+        "Hint": "Allied tokens in the player's proximity stay visible through the Fog of War."
       },
       "proximityRange": {
         "Name": "Proximity Range (grid spaces)",
-        "Hint": "How close an ally must be, measured between token centers, to stay visible."
+        "Hint": "Radius of the proximity area in which ally tokens stay visible."
       },
       "proximityTargets": {
         "Name": "Proximity Targets",
-        "Hint": "Which tokens are kept visible by proximity. Tokens with a secret disposition are never revealed.",
-        "Party": "Player-owned tokens only",
-        "Friendly": "Player-owned and friendly tokens",
+        "Hint": "Token types affected by proximity. Tokens with a secret disposition are never revealed.",
+        "Party": "Only tokens owned by players",
+        "Friendly": "Friendly and owned by players",
         "All": "All tokens"
       },
       "proximityWallsBlock": {
         "Name": "Walls Block Proximity",
-        "Hint": "If enabled, a sight-blocking wall between two tokens prevents proximity awareness."
+        "Hint": "Enable if a sight-blocking wall should prevent proximity detection."
       },
       "lastKnownEnabled": {
         "Name": "Last Known Positions",
-        "Hint": "When a tracked token leaves your sight, mark where it was last seen and the direction it was heading."
+        "Hint": "Mark the position where a tracked token was the last time the player saw it."
       },
       "lastKnownDispositions": {
         "Name": "Tracked Tokens",
-        "Hint": "Which tokens other than allies leave a last known position marker. Tokens you own are never tracked.",
+        "Hint": "Which tokens to track for last known position markers.",
         "Hostile": "Hostile tokens",
         "HostileNeutral": "Hostile and neutral tokens",
         "All": "All other tokens"
       },
       "lastKnownAllies": {
         "Name": "Track Allies",
-        "Hint": "Leave a marker when an allied token you do not own leaves your sight. Allies are player-owned or friendly tokens, and their markers have their own style."
+        "Hint": "Mark the position where an allied token was the last time the player saw it."
       },
       "lastKnownShare": {
         "Name": "Share Sightings With Party",
-        "Hint": "While one player can see a tracked token, every other player sees a marker where it is. When that player loses sight of it, the marker stays where it was last seen."
+        "Hint": "Let other players see a marker for tokens the player is tracking. When the player loses sight of them, the marker stays where it was last seen."
       },
       "lastKnownLifetime": {
         "Name": "Marker Lifetime (rounds)",
-        "Hint": "Remove markers after this many rounds. Outside combat, elapsed game time is converted to rounds. Set to 0 to keep markers until the token is seen again."
+        "Hint": "Remove markers after this many rounds. Set to 0 to keep markers until the token is seen again. Outside combat, elapsed time is converted to rounds."
       },
       "lastKnownClearEmpty": {
         "Name": "Clear Empty Markers",
-        "Hint": "When you see a marked spot again and the token is no longer there, the marker fades out. The spot must have been out of your sight first."
+        "Hint": "When the player sees a marked spot again and the tracked token is no longer there, the marker fades out."
       },
       "lastKnownClearDelay": {
         "Name": "Clear Delay (seconds)",
-        "Hint": "How long a marked spot must stay in view, empty, before its marker fades out."
+        "Hint": "How long an empty marker must stay in view before fading out."
       },
       "lastKnownShowGM": {
-        "Name": "Show Markers to GM",
-        "Hint": "Track last known positions for the GM while the GM is controlling tokens. The GM's markers are never shared with players."
+        "Name": "Show Markers to Game Master",
+        "Hint": "Show markers for the GM while the GM is controlling a token. Those markers are not shared with players."
       },
       "lastKnownStyle": {
         "Name": "Marker Appearance",
         "Label": "Customize Markers",
-        "Hint": "Choose how last known position markers look for every player, with separate styles for enemies and allies."
+        "Hint": "Choose and/or configure how position markers look for hostiles and allies."
       }
     },
     "Keybindings": {
@@ -87,12 +87,12 @@
       },
       "TabHints": {
         "enemy": "Markers for every tracked token that is not an ally.",
-        "ally": "Markers for allies: player-owned or friendly tokens you do not own."
+        "ally": "Markers for allies and friendly tokens."
       },
       "Preset": {
         "Name": "Preset",
         "Choose": "Choose a preset",
-        "Hint": "Fill in this tab with a ready-made style for a kind of game world. Adjust it if you like, then save."
+        "Hint": "Fill in this tab with a ready-made style fitting the game world. Adjust to your liking."
       },
       "Presets": {
         "Classic": "Classic",
@@ -120,7 +120,7 @@
       },
       "color": {
         "Name": "Custom Color",
-        "Hint": "Used when Color is set to Custom color."
+        "Hint": "Used only when Color is set to Custom color."
       },
       "opacity": {
         "Name": "Marker Opacity"
@@ -171,7 +171,7 @@
       },
       "imagePath": {
         "Name": "Custom Image",
-        "Hint": "Used when Image is set to Custom image. Use it to hide what was seen, for example with a question mark icon."
+        "Hint": "Used when Image is set to Custom image."
       },
       "imageOpacity": {
         "Name": "Image Opacity"
