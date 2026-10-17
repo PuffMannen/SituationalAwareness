@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Shared sightings now reach the party while a token is still in view. Before, teammates only got a marker once the player who saw the token lost sight of it. Markers follow a moving token a few times a second.
+- A player who opens a scene gets markers for tokens their teammates can already see.
+- Hiding a token clears its markers for every player, since a hidden token is out of play.
+- Teammates whose computer clocks disagree no longer reject each other's sightings as older.
+
 ## 0.3.0
 
 ### Added

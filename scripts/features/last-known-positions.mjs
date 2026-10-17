@@ -28,6 +28,18 @@ const HEADING_THRESHOLD = 2;
 const ARM_DELAY_MS = 500;
 
 /**
+ * Shortest time between two shared positions of one token while it stays in view, in milliseconds.
+ * @type {number}
+ */
+const SHARE_INTERVAL_MS = 250;
+
+/**
+ * How long shared sightings for other scenes are collected before they are saved, in milliseconds.
+ * @type {number}
+ */
+const STORE_DELAY_MS = 1000;
+
+/**
  * How long a cleared marker takes to fade out, in milliseconds.
  * @type {number}
  */
@@ -62,9 +74,18 @@ export class LastKnownPositions {
 
   /**
    * Per-token visibility state used to detect transitions.
-   * @type {Map<string, {visible: boolean, center: {x: number, y: number}|null, direction: number|null}>}
+   * The shared center is the position last sent to the party while the token was in view.
+   * @type {Map<string, {visible: boolean, center: {x: number, y: number}|null, direction: number|null,
+   *   shared?: {x: number, y: number}|null}>}
    */
   static #states = new Map();
+
+  /**
+   * Tokens in view whose position was shared recently, keyed by token id. Until the timer ends,
+   * further moves only mark the token to be shared again once it does.
+   * @type {Map<string, {timer: number, again: boolean}>}
+   */
+  static #shareTimers = new Map();
 
   /**
    * Clearing state for each marker, keyed by token id.
@@ -109,11 +130,26 @@ export class LastKnownPositions {
   static #storeQueue = Promise.resolve();
 
   /**
+   * Shared sightings for other scenes waiting to be saved, by scene id, then token id.
+   * Teammates share positions several times a second, so they are saved in batches.
+   * @type {Map<string, Map<string, LastKnownData>>}
+   */
+  static #pendingStore = new Map();
+
+  /**
+   * Debounced save of the pending sightings for other scenes.
+   * @type {Function}
+   */
+  static #storeSoon = foundry.utils.debounce(() => this.#storePending(), STORE_DELAY_MS);
+
+  /**
    * Settings which decide which tokens are tracked. Read once per task, because tokens refresh
    * every frame while they move.
-   * @type {TaskCache<{enabled: boolean, showForGM: boolean, allies: boolean, dispositions: string}>}
+   * @type {TaskCache<{enabled: boolean, showForGM: boolean, allies: boolean, dispositions: string,
+   *   share: boolean}>}
    */
   static #trackingSettings = cachePerTask(() => ({
+    share: getSetting(SETTINGS.LAST_KNOWN_SHARE),
     enabled: getSetting(SETTINGS.LAST_KNOWN_ENABLED),
     showForGM: getSetting(SETTINGS.LAST_KNOWN_GM),
     allies: getSetting(SETTINGS.LAST_KNOWN_ALLIES),
@@ -138,6 +174,9 @@ export class LastKnownPositions {
     Hooks.on("canvasTearDown", () => this.#onCanvasTearDown());
     Hooks.on("refreshToken", token => this.#onRefreshToken(token));
     Hooks.on("deleteToken", document => this.#onDeleteToken(document));
+    Hooks.on("updateToken", (document, changes) => {
+      if ( changes.hidden === true ) this.#onDeleteToken(document);
+    });
     Hooks.on("sightRefresh", () => {
       this.#refreshContainerVisibility();
       this.#checkSpots();
@@ -156,6 +195,7 @@ export class LastKnownPositions {
   static activateSocket() {
     game.socket.on(SOCKET_NAME, message => {
       if ( message?.action === "sighting" ) this.#receiveSighting(message.data);
+      else if ( message?.action === "request" ) this.#answerRequest(message.sceneId);
     });
   }
 
@@ -251,22 +291,34 @@ export class LastKnownPositions {
     this.#container.zIndex = (canvas.tokens?.zIndex ?? 200) + 1;
     canvas.interface.addChild(this.#container);
 
+    // Saved sightings, plus shared ones for this scene which are still waiting to be saved
     const stored = game.user.getFlag(MODULE_ID, FLAG_KEY)?.[canvas.scene.id] ?? [];
-    for ( const sighting of stored ) {
+    const pending = this.#pendingStore.get(canvas.scene.id);
+    this.#pendingStore.delete(canvas.scene.id);
+    for ( const sighting of [...stored, ...(pending?.values() ?? [])] ) {
       if ( !canvas.scene.tokens.has(sighting.tokenId) || this.#isExpired(sighting) ) continue;
-      this.#sightings.set(sighting.tokenId, sighting);
+      if ( LastKnownPositions.#isNewer(sighting, this.#sightings.get(sighting.tokenId)) ) {
+        this.#sightings.set(sighting.tokenId, sighting);
+      }
     }
+    if ( pending?.size ) this.#dirty = true;
     this.refresh();
 
     // Seed visibility state once vision has settled, then start recording transitions.
     this.#armTimer = setTimeout(() => {
       this.#armTimer = null;
       if ( !canvas.ready ) return;
+      this.#armed = true;
       for ( const token of canvas.tokens.placeables ) {
         this.#states.set(token.id, {visible: token.visible, center: getRenderedCenter(token), direction: null});
-        if ( token.visible && this.#trackingKind(token) ) this.#remove(token.id);
+        if ( !token.visible || !this.#trackingKind(token) ) continue;
+        if ( this.#sightings.has(token.id) ) this.#remove(token.id);
+        this.#shareSoon(token.id);
       }
-      this.#armed = true;
+      // Ask teammates for the tokens they can see right now, which may not move for a while.
+      if ( this.#trackingSettings().share ) {
+        game.socket.emit(SOCKET_NAME, {action: "request", sceneId: canvas.scene.id});
+      }
     }, ARM_DELAY_MS);
   }
 
@@ -279,6 +331,8 @@ export class LastKnownPositions {
     clearTimeout(this.#armTimer);
     this.#armTimer = null;
     this.#armed = false;
+    for ( const {timer} of this.#shareTimers.values() ) clearTimeout(timer);
+    this.#shareTimers.clear();
     if ( this.#dirty ) this.#persist();
     this.#container?.destroy({children: true});
     this.#container = null;
@@ -307,6 +361,8 @@ export class LastKnownPositions {
 
   /**
    * Detect visibility transitions each time a token refreshes.
+   * While a tracked token is in view, its position is shared with the party as it moves.
+   * When it leaves view, a sighting is recorded where it was last seen.
    * @param {foundry.canvas.placeables.Token} token
    */
   static #onRefreshToken(token) {
@@ -326,30 +382,102 @@ export class LastKnownPositions {
       state.center = center;
       state.visible = true;
       if ( this.#sightings.has(token.id) ) this.#remove(token.id);
+      const shared = state.shared;
+      if ( !shared || (Math.hypot(center.x - shared.x, center.y - shared.y) >= HEADING_THRESHOLD) ) {
+        this.#shareSoon(token.id);
+      }
       return;
     }
 
     if ( !state.visible ) return;
     state.visible = false;
+    state.shared = null;
+    clearTimeout(this.#shareTimers.get(token.id)?.timer);
+    this.#shareTimers.delete(token.id);
 
     // A token hidden by the GM was removed from play, not lost from sight.
     if ( token.document.hidden || !state.center ) return;
     const sighting = this.#createSighting(token, state, kind);
     this.#upsert(sighting);
-    // The GM can see through any token, so the GM's sightings would reveal what players never saw.
-    if ( !game.user.isGM && getSetting(SETTINGS.LAST_KNOWN_SHARE) ) {
-      game.socket.emit(SOCKET_NAME, {action: "sighting", data: sighting});
+    this.#share(sighting);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Send a sighting to every other user, if this user shares sightings.
+   * The GM can see through any token, so the GM's sightings would reveal what players never saw.
+   * @param {LastKnownData} sighting
+   */
+  static #share(sighting) {
+    if ( game.user.isGM || !this.#trackingSettings().share ) return;
+    game.socket.emit(SOCKET_NAME, {action: "sighting", data: sighting});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Share the position of a token in view, at most once per interval. The first share goes out at
+   * once. Moves during the interval are shared when it ends, from the token's latest position,
+   * so a moving token ends on its final position.
+   * @param {string} tokenId
+   */
+  static #shareSoon(tokenId) {
+    if ( game.user.isGM || !this.#trackingSettings().share ) return;
+    const recent = this.#shareTimers.get(tokenId);
+    if ( recent ) {
+      recent.again = true;
+      return;
+    }
+    this.#sharePosition(tokenId);
+    const entry = {again: false, timer: null};
+    entry.timer = setTimeout(() => {
+      this.#shareTimers.delete(tokenId);
+      if ( entry.again ) this.#shareSoon(tokenId);
+    }, SHARE_INTERVAL_MS);
+    this.#shareTimers.set(tokenId, entry);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Share where a token in view is right now.
+   * @param {string} tokenId
+   */
+  static #sharePosition(tokenId) {
+    const token = canvas.tokens?.get(tokenId);
+    const state = this.#states.get(tokenId);
+    if ( !this.#armed || !token?.visible || !state?.visible || !state.center ) return;
+    const kind = this.#trackingKind(token);
+    if ( !kind ) return;
+    state.shared = state.center;
+    this.#share(this.#createSighting(token, state, kind));
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Share every tracked token in view, because a teammate on the same scene asked for them.
+   * @param {string} sceneId
+   */
+  static #answerRequest(sceneId) {
+    if ( !this.#armed || (sceneId !== canvas.scene?.id) ) return;
+    for ( const token of canvas.tokens.placeables ) {
+      if ( token.visible && this.#states.get(token.id)?.visible && this.#trackingKind(token) ) this.#shareSoon(token.id);
     }
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Remove all knowledge of a deleted token.
+   * Remove all knowledge of a token which was deleted or hidden by the GM, since either takes it
+   * out of play.
    * @param {foundry.documents.TokenDocument} document
    */
   static #onDeleteToken(document) {
     if ( document.parent?.id !== canvas.scene?.id ) return;
+    clearTimeout(this.#shareTimers.get(document.id)?.timer);
+    this.#shareTimers.delete(document.id);
     this.#states.delete(document.id);
     if ( this.#sightings.has(document.id) ) this.#remove(document.id);
   }
@@ -417,7 +545,7 @@ export class LastKnownPositions {
       img: token.document.texture?.src ?? null,
       worldTime: game.time.worldTime,
       combat,
-      seenAt: Date.now()
+      seenAt: game.time.serverTime
     };
   }
 
@@ -493,31 +621,63 @@ export class LastKnownPositions {
    * Ignored if the token is visible here, or a newer sighting already exists.
    * @param {LastKnownData} sighting
    */
-  static async #receiveSighting(sighting) {
+  static #receiveSighting(sighting) {
     if ( !getSetting(SETTINGS.LAST_KNOWN_SHARE) || !sighting?.tokenId ) return;
-    const isNewer = existing => !existing || (sighting.worldTime > existing.worldTime)
-      || ((sighting.worldTime === existing.worldTime) && (sighting.seenAt >= existing.seenAt));
 
     // Sighting on the scene this user is viewing
     if ( canvas.ready && (sighting.sceneId === canvas.scene.id) ) {
       const token = canvas.tokens.get(sighting.tokenId);
       const kind = token && !token.visible ? this.#trackingKind(token) : null;
       if ( !kind ) return;
-      if ( isNewer(this.#sightings.get(sighting.tokenId)) ) this.#upsert({...sighting, ally: kind === "ally"});
+      if ( LastKnownPositions.#isNewer(sighting, this.#sightings.get(sighting.tokenId)) ) {
+        this.#upsert({...sighting, ally: kind === "ally"});
+      }
       return;
     }
 
-    // Sighting on another scene: store it for later. Each save waits for the previous one,
-    // so it reads a list which already holds every earlier sighting.
+    // Sighting on another scene: collect it and save it with the others shortly
+    let pending = this.#pendingStore.get(sighting.sceneId);
+    if ( !pending ) this.#pendingStore.set(sighting.sceneId, pending = new Map());
+    if ( !LastKnownPositions.#isNewer(sighting, pending.get(sighting.tokenId)) ) return;
+    pending.set(sighting.tokenId, sighting);
+    this.#storeSoon();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Save the collected sightings for other scenes. Each save waits for the previous one,
+   * so it reads a list which already holds every earlier sighting.
+   * @returns {Promise<void>}
+   */
+  static async #storePending() {
+    const batches = this.#pendingStore;
+    this.#pendingStore = new Map();
     const store = async () => {
-      const stored = game.user.getFlag(MODULE_ID, FLAG_KEY)?.[sighting.sceneId] ?? [];
-      const existing = stored.find(s => s.tokenId === sighting.tokenId);
-      if ( !isNewer(existing) ) return;
-      const updated = stored.filter(s => s.tokenId !== sighting.tokenId).concat([sighting]);
-      await this.#writeScene(sighting.sceneId, updated);
+      for ( const [sceneId, pending] of batches ) {
+        const stored = game.user.getFlag(MODULE_ID, FLAG_KEY)?.[sceneId] ?? [];
+        const kept = stored.filter(s => !LastKnownPositions.#isNewer(pending.get(s.tokenId), s));
+        const added = [...pending.values()].filter(s => !kept.some(k => k.tokenId === s.tokenId));
+        await this.#writeScene(sceneId, kept.concat(added));
+      }
     };
     this.#storeQueue = this.#storeQueue.then(store);
     await this.#storeQueue;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Is a sighting newer than an existing one for the same token? Any sighting beats none.
+   * @param {LastKnownData|undefined} sighting
+   * @param {LastKnownData|undefined} existing
+   * @returns {boolean}
+   */
+  static #isNewer(sighting, existing) {
+    if ( !sighting ) return false;
+    if ( !existing ) return true;
+    if ( sighting.worldTime !== existing.worldTime ) return sighting.worldTime > existing.worldTime;
+    return sighting.seenAt >= existing.seenAt;
   }
 
   /* -------------------------------------------- */

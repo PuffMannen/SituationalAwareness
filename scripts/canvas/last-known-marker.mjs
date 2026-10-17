@@ -12,7 +12,7 @@
  * @property {string|null} img         Token texture path, used when the style shows the token image
  * @property {number} worldTime        game.time.worldTime at the sighting
  * @property {{id: string, round: number}|null} combat   Active combat at the sighting
- * @property {number} seenAt           Real-world timestamp of the sighting
+ * @property {number} seenAt           Real-world timestamp of the sighting, on the server clock so users agree on order
  */
 
 import { I18N, MODULE_ID } from "../constants.mjs";
