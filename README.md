@@ -4,7 +4,7 @@ Fog of War hides what your players can't see. Situational Awareness helps them r
 
 When an enemy slips out of sight, a marker stays where it was last seen, pointing the way it was heading and showing how long ago that was. Allies standing right next to you stay visible, even around a corner or in the dark. The table spends less time asking "wait, where was the orc?" and more time playing.
 
-<!-- Screenshots of markers and proximity awareness go here. -->
+![Last known position markers in Foundry VTT: dashed rings with heading arrows and "Just now" labels where tokens left the players' sight](docs/situational-awareness.png)
 
 - **Last known positions:** a marker where each enemy was last seen, with its heading and time since.
 - **Shared sightings:** what one player sees, the whole party knows.
