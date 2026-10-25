@@ -190,13 +190,14 @@ export class LastKnownPositions {
   static #styles = cachePerTask(() => ({enemy: getMarkerStyle("enemy"), ally: getMarkerStyle("ally")}));
 
   /**
-   * Whether the GM controls tokens and every one of them shares its sightings. Read once per task,
+   * Whether the GM controls tokens and every one of them shares its sightings and has vision.
+   * Core shows the whole scene to a GM controlling only tokens without vision. Read once per task,
    * because the GM's client asks for every token refresh.
    * @type {TaskCache<boolean>}
    */
   static #controlledShare = cachePerTask(() => {
     const controlled = canvas.tokens?.controlled ?? [];
-    return (controlled.length > 0) && controlled.every(sharesSightings);
+    return (controlled.length > 0) && controlled.every(t => t.hasSight && sharesSightings(t));
   });
 
   /* -------------------------------------------- */
@@ -213,7 +214,7 @@ export class LastKnownPositions {
     Hooks.on("deleteToken", document => this.#onDeleteToken(document));
     Hooks.on("updateToken", (document, changes) => {
       if ( changes.hidden === true ) this.#onDeleteToken(document);
-      if ( game.user.isGM && document.object?.controlled && changes.flags?.[MODULE_ID] ) {
+      if ( game.user.isGM && document.object?.controlled && (changes.flags?.[MODULE_ID] || ("sight" in changes)) ) {
         this.#controlledShare.clear();
         this.#arm();
       }
