@@ -15,6 +15,7 @@ export const SETTINGS = Object.freeze({
   LAST_KNOWN_DISPOSITIONS: "lastKnownDispositions",
   LAST_KNOWN_ALLIES: "lastKnownAllies",
   LAST_KNOWN_SHARE: "lastKnownShare",
+  LAST_KNOWN_SHARE_PROXIMITY: "lastKnownShareProximity",
   LAST_KNOWN_LIFETIME: "lastKnownLifetime",
   LAST_KNOWN_CLEAR: "lastKnownClearEmpty",
   LAST_KNOWN_CLEAR_DELAY: "lastKnownClearDelay",
@@ -67,10 +68,14 @@ export function registerSettings({refreshVisibility, refreshMarkers, resetTracki
     ...data
   });
 
-  // Proximity awareness
-  register(SETTINGS.PROXIMITY_ENABLED, {scope: "world", type: Boolean, default: true, onChange: refreshVisibility});
+  // Proximity awareness. Settings which also shape proximity groups start tracking over.
+  const refreshProximity = () => {
+    refreshVisibility();
+    resetTracking();
+  };
+  register(SETTINGS.PROXIMITY_ENABLED, {scope: "world", type: Boolean, default: true, onChange: refreshProximity});
   register(SETTINGS.PROXIMITY_RANGE, {
-    scope: "world", type: Number, default: 2, range: {min: 1, max: 20, step: 1}, onChange: refreshVisibility
+    scope: "world", type: Number, default: 2, range: {min: 1, max: 20, step: 1}, onChange: refreshProximity
   });
   register(SETTINGS.PROXIMITY_TARGETS, {
     scope: "world", type: String, default: "friendly", onChange: refreshVisibility,
@@ -80,7 +85,7 @@ export function registerSettings({refreshVisibility, refreshMarkers, resetTracki
       all: `${I18N}.Settings.${SETTINGS.PROXIMITY_TARGETS}.All`
     }
   });
-  register(SETTINGS.PROXIMITY_WALLS, {scope: "world", type: Boolean, default: false, onChange: refreshVisibility});
+  register(SETTINGS.PROXIMITY_WALLS, {scope: "world", type: Boolean, default: false, onChange: refreshProximity});
 
   // Last known positions
   // Settings deciding which tokens are tracked or shared start tracking over when changed
@@ -95,6 +100,7 @@ export function registerSettings({refreshVisibility, refreshMarkers, resetTracki
   });
   register(SETTINGS.LAST_KNOWN_ALLIES, {scope: "world", type: Boolean, default: true, onChange: resetTracking});
   register(SETTINGS.LAST_KNOWN_SHARE, {scope: "world", type: Boolean, default: true, onChange: resetTracking});
+  register(SETTINGS.LAST_KNOWN_SHARE_PROXIMITY, {scope: "world", type: Boolean, default: false, onChange: resetTracking});
   register(SETTINGS.LAST_KNOWN_LIFETIME, {
     scope: "world", type: Number, default: 0, range: {min: 0, max: 100, step: 1}, onChange: refreshMarkers
   });

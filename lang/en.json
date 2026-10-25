@@ -39,6 +39,10 @@
         "Name": "Share Sightings With Party",
         "Hint": "Let other players see a marker for tokens the player is tracking. When the player loses sight of them, the marker stays where it was last seen."
       },
+      "lastKnownShareProximity": {
+        "Name": "Limit Share Sightings To Proximity",
+        "Hint": "Share sightings only within a group of allies in proximity of each other, as set by Proximity Range and Walls Block Proximity. Allies who meet exchange their markers, and markers stay when an ally leaves. Used only when Proximity Awareness and Share Sightings With Party are on."
+      },
       "lastKnownLifetime": {
         "Name": "Marker Lifetime (rounds)",
         "Hint": "Remove markers after this many rounds. Set to 0 to keep markers until the token is seen again. Outside combat, elapsed time is converted to rounds."

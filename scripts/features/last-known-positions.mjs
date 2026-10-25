@@ -1,8 +1,9 @@
 import { I18N, MODULE_ID, SOCKET_NAME } from "../constants.mjs";
 import { SETTINGS, getMarkerStyle, getSetting } from "../settings.mjs";
-import { getRenderedCenter, hasRestrictedVision, isAlly, sharesSightings } from "../helpers/observers.mjs";
+import { getObservers, getRenderedCenter, hasRestrictedVision, isAlly, sharesSightings } from "../helpers/observers.mjs";
 import { cachePerTask } from "../helpers/cache.mjs";
 import { LastKnownMarker } from "../canvas/last-known-marker.mjs";
+import { ProximityAwareness } from "./proximity-awareness.mjs";
 
 /** @import { LastKnownData } from "../canvas/last-known-marker.mjs" */
 /** @import { MarkerKind, MarkerStyle } from "../data/marker-style.mjs" */
@@ -130,6 +131,24 @@ export class LastKnownPositions {
   static #askWhenArmed = false;
 
   /**
+   * Ids of the tokens in the user's proximity group when last checked.
+   * @type {Set<string>}
+   */
+  static #group = new Set();
+
+  /**
+   * Pending timeout which checks the user's proximity group.
+   * @type {number|null}
+   */
+  static #groupTimer = null;
+
+  /**
+   * The user's proximity group as last found, and when.
+   * @type {{ids: Set<string>, at: number}|null}
+   */
+  static #groupCache = null;
+
+  /**
    * Saves of sightings shared for other scenes, run one at a time so none overwrites another.
    * @type {Promise<void>}
    */
@@ -151,11 +170,13 @@ export class LastKnownPositions {
   /**
    * Settings which decide which tokens are tracked. Read once per task, because tokens refresh
    * every frame while they move.
+   * Proximity is whether sharing is limited to the user's proximity group.
    * @type {TaskCache<{enabled: boolean, showForGM: boolean, allies: boolean, dispositions: string,
-   *   share: boolean}>}
+   *   share: boolean, proximity: boolean}>}
    */
   static #trackingSettings = cachePerTask(() => ({
     share: getSetting(SETTINGS.LAST_KNOWN_SHARE),
+    proximity: getSetting(SETTINGS.PROXIMITY_ENABLED) && getSetting(SETTINGS.LAST_KNOWN_SHARE_PROXIMITY),
     enabled: getSetting(SETTINGS.LAST_KNOWN_ENABLED),
     showForGM: getSetting(SETTINGS.LAST_KNOWN_GM),
     allies: getSetting(SETTINGS.LAST_KNOWN_ALLIES),
@@ -203,6 +224,7 @@ export class LastKnownPositions {
     });
     Hooks.on("controlToken", () => {
       this.#controlledShare.clear();
+      this.#groupCache = null;
       this.#refreshContainerVisibility();
       // The GM's vision changes with the controlled tokens. What the old ones saw was never seen
       // by the new ones, so tracking starts over once vision settles.
@@ -221,7 +243,8 @@ export class LastKnownPositions {
    */
   static activateSocket() {
     game.socket.on(SOCKET_NAME, message => {
-      if ( message?.action === "sighting" ) this.#receiveSighting(message.data);
+      if ( message?.action === "sighting" ) this.#receiveSighting(message.data, message.from);
+      else if ( message?.action === "sync" ) this.#receiveSync(message);
       else if ( message?.action === "request" ) this.#answerRequest(message.sceneId);
     });
     // Core calls no hook when the GM resets fog of war. The server announces each reset to every
@@ -371,6 +394,8 @@ export class LastKnownPositions {
         if ( this.#sightings.has(token.id) ) this.#remove(token.id);
         this.#shareSoon(token.id);
       }
+      // Everyone in the user's proximity group counts as just met
+      this.#checkGroup();
       // Tokens teammates see may not move for a while, so they would not be shared otherwise.
       if ( asking && this.#trackingSettings().share && this.#keepsSightings() ) {
         game.socket.emit(SOCKET_NAME, {action: "request", sceneId: canvas.scene.id});
@@ -390,6 +415,10 @@ export class LastKnownPositions {
     for ( const {timer} of this.#shareTimers.values() ) clearTimeout(timer);
     this.#shareTimers.clear();
     this.#states.clear();
+    clearTimeout(this.#groupTimer);
+    this.#groupTimer = null;
+    this.#group.clear();
+    this.#groupCache = null;
   }
 
   /* -------------------------------------------- */
@@ -433,6 +462,7 @@ export class LastKnownPositions {
    */
   static #onRefreshToken(token) {
     if ( !this.#armed || token.isPreview ) return;
+    if ( this.#trackingSettings().proximity ) this.#checkGroupSoon();
     const kind = this.#trackingKind(token);
     if ( !kind ) return;
     const state = this.#states.get(token.id) ?? {visible: false, center: null, direction: null};
@@ -495,12 +525,95 @@ export class LastKnownPositions {
   /* -------------------------------------------- */
 
   /**
-   * Send a sighting to every other user, if this user shares sightings.
+   * Send a sighting to every other user, if this user shares sightings. The tokens this user looks
+   * through go along, so receivers can tell whether the sender is in their proximity group.
    * @param {LastKnownData} sighting
    */
   static #share(sighting) {
     if ( !this.#mayShare() ) return;
-    game.socket.emit(SOCKET_NAME, {action: "sighting", data: sighting});
+    game.socket.emit(SOCKET_NAME, {action: "sighting", data: sighting, from: this.#observerIds()});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * The ids of the tokens this user looks through.
+   * @returns {string[]}
+   */
+  static #observerIds() {
+    return getObservers().map(t => t.id);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Send every marker this user holds on the scene to their proximity group, received ones
+   * included, along with the tracked tokens in view. Receivers keep whichever sighting of each
+   * token is newest. The GM's own markers may come from tokens which do not share, so the GM never
+   * sends them.
+   * @param {object} [options]
+   * @param {boolean} [options.reply=false]   Whether this answers a sync, which is not answered again
+   */
+  static #sendSync({reply=false}={}) {
+    if ( game.user.isGM || !this.#mayShare() || !this.#trackingSettings().proximity ) return;
+    // Tracked tokens in view are not among the markers, and may not move to be shared again
+    const sightings = new Map(this.#sightings);
+    for ( const token of canvas.tokens.placeables ) {
+      const state = this.#states.get(token.id);
+      if ( !token.visible || !state?.visible || !state.center ) continue;
+      const kind = this.#trackingKind(token);
+      if ( kind ) sightings.set(token.id, this.#createSighting(token, state, kind));
+    }
+    if ( !sightings.size ) return;
+    game.socket.emit(SOCKET_NAME, {
+      action: "sync",
+      sceneId: canvas.scene.id,
+      from: this.#observerIds(),
+      sightings: Array.from(sightings.values()),
+      reply
+    });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Check the user's proximity group shortly, at most once per interval while tokens move.
+   */
+  static #checkGroupSoon() {
+    if ( this.#groupTimer !== null ) return;
+    this.#groupTimer = setTimeout(() => {
+      this.#groupTimer = null;
+      this.#checkGroup();
+    }, SHARE_INTERVAL_MS);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Find who is in the user's proximity group now. When anyone joined, send them this user's
+   * markers. Whoever joined does the same, so both sides end up with the newest of each.
+   */
+  static #checkGroup() {
+    if ( !this.#armed || game.user.isGM || !this.#trackingSettings().proximity ) return;
+    const group = this.#groupIds();
+    const joined = [...group].some(id => !this.#group.has(id));
+    this.#group = group;
+    if ( joined ) this.#sendSync();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Ids of the tokens in the user's proximity group, found again at most once per interval, since
+   * teammates share positions several times a second.
+   * @returns {Set<string>}
+   */
+  static #groupIds() {
+    const now = Date.now();
+    if ( this.#groupCache && ((now - this.#groupCache.at) < SHARE_INTERVAL_MS) ) return this.#groupCache.ids;
+    const ids = new Set(Array.from(ProximityAwareness.groupOf(getObservers()), t => t.id));
+    this.#groupCache = {ids, at: now};
+    return ids;
   }
 
   /* -------------------------------------------- */
@@ -554,6 +667,8 @@ export class LastKnownPositions {
     for ( const token of canvas.tokens.placeables ) {
       if ( token.visible && this.#states.get(token.id)?.visible && this.#trackingKind(token) ) this.#shareSoon(token.id);
     }
+    // A teammate opening the scene in this user's proximity group gets this user's markers too
+    this.#sendSync();
   }
 
   /* -------------------------------------------- */
@@ -738,22 +853,23 @@ export class LastKnownPositions {
 
   /**
    * Accept a sighting shared by another user.
-   * Ignored if the token is visible here, or a newer sighting already exists.
+   * Ignored if the token is visible here, or a newer sighting already exists. While sharing is
+   * limited to proximity, only sightings from the user's proximity group count.
    * @param {LastKnownData} sighting
+   * @param {string[]} [from]   The tokens the sender looked through
    */
-  static #receiveSighting(sighting) {
-    if ( !getSetting(SETTINGS.LAST_KNOWN_SHARE) || !sighting?.tokenId || !this.#keepsSightings() ) return;
+  static #receiveSighting(sighting, from) {
+    if ( !this.#trackingSettings().share || !sighting?.tokenId || !this.#keepsSightings() ) return;
 
     // Sighting on the scene this user is viewing
     if ( canvas.ready && (sighting.sceneId === canvas.scene.id) ) {
-      const token = canvas.tokens.get(sighting.tokenId);
-      const kind = token && !token.visible ? this.#trackingKind(token) : null;
-      if ( !kind ) return;
-      if ( LastKnownPositions.#isNewer(sighting, this.#sightings.get(sighting.tokenId)) ) {
-        this.#upsert({...sighting, ally: kind === "ally"});
-      }
+      if ( this.#trackingSettings().proximity && !this.#inGroup(from) ) return;
+      this.#accept(sighting);
       return;
     }
+
+    // Nobody on another scene is in proximity of this user
+    if ( this.#trackingSettings().proximity ) return;
 
     // Sighting on another scene: collect it and save it with the others shortly
     let pending = this.#pendingStore.get(sighting.sceneId);
@@ -761,6 +877,55 @@ export class LastKnownPositions {
     if ( !LastKnownPositions.#isNewer(sighting, pending.get(sighting.tokenId)) ) return;
     pending.set(sighting.tokenId, sighting);
     this.#storeSoon();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Accept every marker an ally in the user's proximity group sent on meeting the group.
+   * @param {object} message
+   * @param {string} message.sceneId
+   * @param {string[]} message.from              The tokens the sender looked through
+   * @param {LastKnownData[]} message.sightings
+   */
+  static #receiveSync({sceneId, from, sightings, reply}) {
+    if ( !this.#trackingSettings().share || !this.#trackingSettings().proximity || !this.#keepsSightings() ) return;
+    if ( !canvas.ready || (sceneId !== canvas.scene.id) || !Array.isArray(sightings) ) return;
+    if ( !this.#inGroup(from) ) return;
+    for ( const sighting of sightings ) {
+      if ( sighting?.tokenId && (sighting.sceneId === sceneId) && !this.#isExpired(sighting) ) this.#accept(sighting);
+    }
+    // The sender may have seen the meeting before this client did, and dropped its own sync
+    if ( !reply ) this.#sendSync({reply: true});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Add a shared sighting on the current scene, unless the token is visible here, not tracked,
+   * or already seen more recently.
+   * @param {LastKnownData} sighting
+   */
+  static #accept(sighting) {
+    const token = canvas.tokens.get(sighting.tokenId);
+    const kind = token && !token.visible ? this.#trackingKind(token) : null;
+    if ( !kind ) return;
+    if ( LastKnownPositions.#isNewer(sighting, this.#sightings.get(sighting.tokenId)) ) {
+      this.#upsert({...sighting, ally: kind === "ally"});
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Whether any token a sender looked through is in this user's proximity group.
+   * @param {string[]} [from]
+   * @returns {boolean}
+   */
+  static #inGroup(from) {
+    if ( !Array.isArray(from) ) return false;
+    const group = this.#groupIds();
+    return from.some(id => group.has(id));
   }
 
   /* -------------------------------------------- */

@@ -68,3 +68,4 @@ templates/marker-style-config.hbs    Template for that dialog
 7. As GM with no token selected, nothing from this module is drawn.
 8. As GM, open Customize Markers, pick a preset on each tab and save. Every player's markers change.
 9. As GM, turn on Share Sightings With Party for a friendly token, control it and walk it so a hostile leaves its sight. A connected player who can't see the hostile gets a marker. Control a token without the option too and nothing is shared.
+10. Turn on Limit Share Sightings To Proximity. Two players far apart don't share. Walk them into Proximity Range and each gets the other's markers. Walk apart again and the markers stay.

@@ -20,6 +20,7 @@ When a tracked token leaves your sight, a marker stays where you last saw it. An
 
 - **Shared:** while any player can see a tracked token, the rest of the party sees a marker that follows it.
 - **Shared by the GM:** a token the GM controls, such as a friendly NPC, a charmed hostile or the token of a player who couldn't join, shares what it sees when its **Share Sightings With Party** option is on. Set it in the token's Vision tab, or for every selected token with the Token HUD button. Nothing is shared while the GM also controls a token without the option.
+- **Limited to proximity:** with Limit Share Sightings To Proximity on, sightings are shared only within a group of allies standing in proximity of each other, linked in a chain through Proximity Range. Allies who meet exchange their markers, and markers stay when an ally leaves the group.
 - **Cleared:** when you see the token again, or see its spot again with the token gone. Clearing every marker on a scene works through the Token controls or a key binding. A GM fog reset or hiding a token also clears them.
 - **Saved:** markers survive reloads and scene changes.
 
@@ -45,6 +46,7 @@ Allies close to one of your tokens stay visible, even around corners or in darkn
 | Tracked Tokens | Hostile | Which non-allied tokens leave markers. |
 | Track Allies | On | Leave markers for allies you don't own. |
 | Share Sightings With Party | On | Share markers with the whole party. |
+| Limit Share Sightings To Proximity | Off | Share only within a group of allies in proximity. Needs Proximity Awareness. |
 | Marker Lifetime | 0 (never) | Remove markers after this many rounds. |
 | Clear Empty Markers | On | Fade out a marker when its spot is seen empty. |
 | Clear Delay | 2 seconds | How long an empty spot must stay in view first. |
