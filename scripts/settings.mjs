@@ -57,8 +57,9 @@ export function getMarkerStyle(kind="enemy") {
  * @param {object} callbacks                        Feature callbacks invoked when settings change
  * @param {Function} callbacks.refreshVisibility    Re-evaluate token visibility
  * @param {Function} callbacks.refreshMarkers       Redraw last-known-position markers
+ * @param {Function} callbacks.resetTracking        Redraw markers and start tracking over
  */
-export function registerSettings({refreshVisibility, refreshMarkers}) {
+export function registerSettings({refreshVisibility, refreshMarkers, resetTracking}) {
   const register = (key, data) => game.settings.register(MODULE_ID, key, {
     name: `${I18N}.Settings.${key}.Name`,
     hint: `${I18N}.Settings.${key}.Hint`,
@@ -82,17 +83,18 @@ export function registerSettings({refreshVisibility, refreshMarkers}) {
   register(SETTINGS.PROXIMITY_WALLS, {scope: "world", type: Boolean, default: false, onChange: refreshVisibility});
 
   // Last known positions
-  register(SETTINGS.LAST_KNOWN_ENABLED, {scope: "world", type: Boolean, default: true, onChange: refreshMarkers});
+  // Settings deciding which tokens are tracked or shared start tracking over when changed
+  register(SETTINGS.LAST_KNOWN_ENABLED, {scope: "world", type: Boolean, default: true, onChange: resetTracking});
   register(SETTINGS.LAST_KNOWN_DISPOSITIONS, {
-    scope: "world", type: String, default: "hostile", onChange: refreshMarkers,
+    scope: "world", type: String, default: "hostile", onChange: resetTracking,
     choices: {
       hostile: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_DISPOSITIONS}.Hostile`,
       hostileNeutral: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_DISPOSITIONS}.HostileNeutral`,
       all: `${I18N}.Settings.${SETTINGS.LAST_KNOWN_DISPOSITIONS}.All`
     }
   });
-  register(SETTINGS.LAST_KNOWN_ALLIES, {scope: "world", type: Boolean, default: true, onChange: refreshMarkers});
-  register(SETTINGS.LAST_KNOWN_SHARE, {scope: "world", type: Boolean, default: true});
+  register(SETTINGS.LAST_KNOWN_ALLIES, {scope: "world", type: Boolean, default: true, onChange: resetTracking});
+  register(SETTINGS.LAST_KNOWN_SHARE, {scope: "world", type: Boolean, default: true, onChange: resetTracking});
   register(SETTINGS.LAST_KNOWN_LIFETIME, {
     scope: "world", type: Number, default: 0, range: {min: 0, max: 100, step: 1}, onChange: refreshMarkers
   });
@@ -100,7 +102,7 @@ export function registerSettings({refreshVisibility, refreshMarkers}) {
   register(SETTINGS.LAST_KNOWN_CLEAR_DELAY, {
     scope: "world", type: Number, default: 2, range: {min: 0, max: 30, step: 1}, onChange: refreshMarkers
   });
-  register(SETTINGS.LAST_KNOWN_GM, {scope: "client", type: Boolean, default: false, onChange: refreshMarkers});
+  register(SETTINGS.LAST_KNOWN_GM, {scope: "client", type: Boolean, default: false, onChange: resetTracking});
 
   // Marker appearance, edited by the GM through its own form rather than the settings list
   for ( const [kind, key] of Object.entries(STYLE_SETTINGS) ) {

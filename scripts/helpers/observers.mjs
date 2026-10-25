@@ -3,6 +3,8 @@
  * @module
  */
 
+import { MODULE_ID, SHARE_FLAG } from "../constants.mjs";
+
 /**
  * The tokens whose perspective the current user is viewing the scene from.
  * Mirrors core behaviour: controlled tokens take priority. Players with nothing controlled
@@ -27,6 +29,15 @@ export function isAlly(token) {
   const disposition = token.document.disposition;
   if ( disposition === D.SECRET ) return false;
   return !!token.actor?.hasPlayerOwner || (disposition === D.FRIENDLY);
+}
+
+/**
+ * Whether the GM let this token share its sightings with the party, whatever its disposition.
+ * @param {foundry.canvas.placeables.Token} token
+ * @returns {boolean}
+ */
+export function sharesSightings(token) {
+  return !!token.document.getFlag(MODULE_ID, SHARE_FLAG);
 }
 
 /**

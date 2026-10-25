@@ -48,13 +48,14 @@ scripts/canvas/last-known-marker.mjs PIXI marker graphic
 scripts/data/marker-style.mjs        Marker style schema
 scripts/data/marker-presets.mjs      Ready-made marker styles
 scripts/apps/marker-style-config.mjs GM dialog for the marker style
+scripts/apps/share-sightings-controls.mjs Token sheet checkbox and Token HUD button for sharing GM sightings
 templates/marker-style-config.hbs    Template for that dialog
 ```
 
 ## How it hooks in
 
 - **Proximity awareness** extends `CONFIG.Token.objectClass` during `setup`, after systems have registered their own Token class. It overrides only the `isVisible` getter and defers to core first. Core draws token images beneath the fog, so a revealed ally also gets a detection filter, the same mechanism core uses for tremorsense. Core then draws a copy above the fog, tinted like explored fog.
-- **Last known positions** draws its markers just above the token layer, because visible tokens erase their footprint from anything beneath it. It listens to `refreshToken` and records a sighting when a token's `visible` flips from true to false. It ignores transitions for half a second after the canvas loads, while vision initializes. Sightings made by the GM are never shared.
+- **Last known positions** draws its markers just above the token layer, because visible tokens erase their footprint from anything beneath it. It listens to `refreshToken` and records a sighting when a token's `visible` flips from true to false. It ignores transitions for half a second after the canvas loads, while vision initializes. The GM shares sightings only while every controlled token has the `shareSightings` token flag on. Whenever the GM's controlled tokens change, tracking starts over, so nothing the previous tokens saw is recorded as seen by the new ones.
 
 ## Manual test checklist
 
@@ -66,3 +67,4 @@ templates/marker-style-config.hbs    Template for that dialog
 6. Place a friendly token behind a wall within range. It stays visible. Enable Walls Block Proximity and it disappears.
 7. As GM with no token selected, nothing from this module is drawn.
 8. As GM, open Customize Markers, pick a preset on each tab and save. Every player's markers change.
+9. As GM, turn on Share Sightings With Party for a friendly token, control it and walk it so a hostile leaves its sight. A connected player who can't see the hostile gets a marker. Control a token without the option too and nothing is shared.

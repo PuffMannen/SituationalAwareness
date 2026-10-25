@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Tokens the GM controls can share their sightings with the party. Turn on Share Sightings With Party in the token's Vision tab, or for every selected token with the new Token HUD button. Any token can share, but only while every token the GM controls has the option on. Foundry merges the vision of all controlled tokens, so tokens without sharing would leak what it sees.
+
+### Fixed
+
+- Taking control of another token as GM, or releasing every token, could leave the GM markers where the new token never saw anything.
+- With Show Markers to Game Master off, the GM's client still saved sightings shared for other scenes.
+
 ## 0.3.2
 
 ### Changed

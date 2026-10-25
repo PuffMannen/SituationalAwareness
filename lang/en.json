@@ -53,7 +53,7 @@
       },
       "lastKnownShowGM": {
         "Name": "Show Markers to Game Master",
-        "Hint": "Show markers for the GM while the GM is controlling a token. Those markers are not shared with players."
+        "Hint": "Show markers for the GM while the GM is controlling a token. Those markers are not shared with players. To share what a token sees, turn on Share Sightings With Party for that token."
       },
       "lastKnownStyle": {
         "Name": "Marker Appearance",
@@ -69,6 +69,13 @@
     },
     "Controls": {
       "ClearMarkers": "Clear Last Known Positions"
+    },
+    "ShareSightings": {
+      "Legend": "Situational Awareness",
+      "Name": "Share Sightings With Party",
+      "Hint": "While the GM controls this token, its sightings are shared with the players. Used only when every token the GM controls shares and the world setting Share Sightings With Party is on.",
+      "Start": "Share Sightings With Party",
+      "Stop": "Stop Sharing Sightings"
     },
     "Marker": {
       "JustNow": "Just now",

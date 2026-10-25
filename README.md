@@ -19,6 +19,7 @@ Enable the module in your world. Both features are on by default. Requires Found
 When a tracked token leaves your sight, a marker stays where you last saw it. An arrow shows which way it was moving, and a label shows how many rounds ago you saw it.
 
 - **Shared:** while any player can see a tracked token, the rest of the party sees a marker that follows it.
+- **Shared by the GM:** a token the GM controls, such as a friendly NPC, a charmed hostile or the token of a player who couldn't join, shares what it sees when its **Share Sightings With Party** option is on. Set it in the token's Vision tab, or for every selected token with the Token HUD button. Nothing is shared while the GM also controls a token without the option.
 - **Cleared:** when you see the token again, or see its spot again with the token gone. Clearing every marker on a scene works through the Token controls or a key binding. A GM fog reset or hiding a token also clears them.
 - **Saved:** markers survive reloads and scene changes.
 
@@ -47,7 +48,7 @@ Allies close to one of your tokens stay visible, even around corners or in darkn
 | Marker Lifetime | 0 (never) | Remove markers after this many rounds. |
 | Clear Empty Markers | On | Fade out a marker when its spot is seen empty. |
 | Clear Delay | 2 seconds | How long an empty spot must stay in view first. |
-| Show Markers to Game Master | Off | Give the GM markers while controlling tokens. Never shared. |
+| Show Markers to Game Master | Off | Give the GM markers while controlling tokens. Only the GM sees them. |
 
 Show Markers to Game Master is set per client. All other settings are world settings, changed by the GM.
 

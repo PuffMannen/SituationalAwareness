@@ -1,6 +1,6 @@
 import { I18N, MODULE_ID, SOCKET_NAME } from "../constants.mjs";
 import { SETTINGS, getMarkerStyle, getSetting } from "../settings.mjs";
-import { getRenderedCenter, hasRestrictedVision, isAlly } from "../helpers/observers.mjs";
+import { getRenderedCenter, hasRestrictedVision, isAlly, sharesSightings } from "../helpers/observers.mjs";
 import { cachePerTask } from "../helpers/cache.mjs";
 import { LastKnownMarker } from "../canvas/last-known-marker.mjs";
 
@@ -124,6 +124,12 @@ export class LastKnownPositions {
   static #armTimer = null;
 
   /**
+   * Whether the pending arm timer asks teammates for the tokens they can see.
+   * @type {boolean}
+   */
+  static #askWhenArmed = false;
+
+  /**
    * Saves of sightings shared for other scenes, run one at a time so none overwrites another.
    * @type {Promise<void>}
    */
@@ -162,6 +168,16 @@ export class LastKnownPositions {
    */
   static #styles = cachePerTask(() => ({enemy: getMarkerStyle("enemy"), ally: getMarkerStyle("ally")}));
 
+  /**
+   * Whether the GM controls tokens and every one of them shares its sightings. Read once per task,
+   * because the GM's client asks for every token refresh.
+   * @type {TaskCache<boolean>}
+   */
+  static #controlledShare = cachePerTask(() => {
+    const controlled = canvas.tokens?.controlled ?? [];
+    return (controlled.length > 0) && controlled.every(sharesSightings);
+  });
+
   /* -------------------------------------------- */
   /*  Registration                                */
   /* -------------------------------------------- */
@@ -176,12 +192,22 @@ export class LastKnownPositions {
     Hooks.on("deleteToken", document => this.#onDeleteToken(document));
     Hooks.on("updateToken", (document, changes) => {
       if ( changes.hidden === true ) this.#onDeleteToken(document);
+      if ( game.user.isGM && document.object?.controlled && changes.flags?.[MODULE_ID] ) {
+        this.#controlledShare.clear();
+        this.#arm();
+      }
     });
     Hooks.on("sightRefresh", () => {
       this.#refreshContainerVisibility();
       this.#checkSpots();
     });
-    Hooks.on("controlToken", () => this.#refreshContainerVisibility());
+    Hooks.on("controlToken", () => {
+      this.#controlledShare.clear();
+      this.#refreshContainerVisibility();
+      // The GM's vision changes with the controlled tokens. What the old ones saw was never seen
+      // by the new ones, so tracking starts over once vision settles.
+      if ( game.user.isGM && canvas.ready ) this.#arm();
+    });
     Hooks.on("updateCombat", () => this.refresh());
     Hooks.on("deleteCombat", () => this.refresh());
     Hooks.on("updateWorldTime", () => this.refresh());
@@ -281,6 +307,17 @@ export class LastKnownPositions {
   }
 
   /* -------------------------------------------- */
+
+  /**
+   * Refresh, then start tracking over. Used when a setting changes which tokens are tracked or
+   * shared, since tokens were not followed while untracked and their last state is out of date.
+   */
+  static resetTracking() {
+    this.refresh();
+    if ( canvas.ready && this.#container ) this.#arm();
+  }
+
+  /* -------------------------------------------- */
   /*  Canvas Lifecycle                            */
   /* -------------------------------------------- */
 
@@ -307,10 +344,25 @@ export class LastKnownPositions {
     }
     if ( pending?.size ) this.#dirty = true;
     this.refresh();
+    this.#arm({ask: true});
+  }
 
-    // Seed visibility state once vision has settled, then start recording transitions.
+  /* -------------------------------------------- */
+
+  /**
+   * Forget what is known about which tokens are in view, then seed it again once vision has
+   * settled and start recording transitions.
+   * @param {object} [options]
+   * @param {boolean} [options.ask=false]   Ask teammates for the tokens they can see right now
+   */
+  static #arm({ask=false}={}) {
+    // Arming again before the timer ends still asks, if the earlier call meant to
+    const asking = ask || this.#askWhenArmed;
+    this.#disarm();
+    this.#askWhenArmed = asking;
     this.#armTimer = setTimeout(() => {
       this.#armTimer = null;
+      this.#askWhenArmed = false;
       if ( !canvas.ready ) return;
       this.#armed = true;
       for ( const token of canvas.tokens.placeables ) {
@@ -319,8 +371,8 @@ export class LastKnownPositions {
         if ( this.#sightings.has(token.id) ) this.#remove(token.id);
         this.#shareSoon(token.id);
       }
-      // Ask teammates for the tokens they can see right now, which may not move for a while.
-      if ( this.#trackingSettings().share ) {
+      // Tokens teammates see may not move for a while, so they would not be shared otherwise.
+      if ( asking && this.#trackingSettings().share && this.#keepsSightings() ) {
         game.socket.emit(SOCKET_NAME, {action: "request", sceneId: canvas.scene.id});
       }
     }, ARM_DELAY_MS);
@@ -329,20 +381,30 @@ export class LastKnownPositions {
   /* -------------------------------------------- */
 
   /**
-   * Save pending changes and release canvas resources before the scene changes.
+   * Stop recording transitions and forget which tokens are in view.
    */
-  static #onCanvasTearDown() {
+  static #disarm() {
     clearTimeout(this.#armTimer);
     this.#armTimer = null;
     this.#armed = false;
     for ( const {timer} of this.#shareTimers.values() ) clearTimeout(timer);
     this.#shareTimers.clear();
+    this.#states.clear();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Save pending changes and release canvas resources before the scene changes.
+   */
+  static #onCanvasTearDown() {
+    this.#disarm();
+    this.#askWhenArmed = false;
     if ( this.#dirty ) this.#persist();
     this.#container?.destroy({children: true});
     this.#container = null;
     this.#markers.clear();
     this.#sightings.clear();
-    this.#states.clear();
     this.#cancelClearing();
     this.#spots.clear();
   }
@@ -402,19 +464,42 @@ export class LastKnownPositions {
     // A token hidden by the GM was removed from play, not lost from sight.
     if ( token.document.hidden || !state.center ) return;
     const sighting = this.#createSighting(token, state, kind);
-    this.#upsert(sighting);
+    if ( this.#keepsSightings() ) this.#upsert(sighting);
     this.#share(sighting);
   }
 
   /* -------------------------------------------- */
 
   /**
+   * Whether this user may share sightings with the party right now.
+   * The GM can see through any token, so the GM shares only while looking through tokens which
+   * share their sightings. Core merges the vision of every controlled token, so all must share.
+   * @returns {boolean}
+   */
+  static #mayShare() {
+    if ( !this.#trackingSettings().share ) return false;
+    return !game.user.isGM || this.#controlledShare();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Whether this user keeps sightings of their own. The GM tracks for sharing alone unless
+   * Show for GM is on.
+   * @returns {boolean}
+   */
+  static #keepsSightings() {
+    return !game.user.isGM || this.#trackingSettings().showForGM;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Send a sighting to every other user, if this user shares sightings.
-   * The GM can see through any token, so the GM's sightings would reveal what players never saw.
    * @param {LastKnownData} sighting
    */
   static #share(sighting) {
-    if ( game.user.isGM || !this.#trackingSettings().share ) return;
+    if ( !this.#mayShare() ) return;
     game.socket.emit(SOCKET_NAME, {action: "sighting", data: sighting});
   }
 
@@ -427,7 +512,7 @@ export class LastKnownPositions {
    * @param {string} tokenId
    */
   static #shareSoon(tokenId) {
-    if ( game.user.isGM || !this.#trackingSettings().share ) return;
+    if ( !this.#mayShare() ) return;
     const recent = this.#shareTimers.get(tokenId);
     if ( recent ) {
       recent.again = true;
@@ -514,13 +599,19 @@ export class LastKnownPositions {
 
   /**
    * Which kind of marker this token leaves when it disappears from view, if any.
-   * Nothing is tracked while the feature is off, or for the GM unless Show for GM is on.
+   * Nothing is tracked while the feature is off. The GM tracks only while controlling tokens,
+   * since the GM sees everything otherwise, and only to show markers or to share them.
    * @param {foundry.canvas.placeables.Token} token
    * @returns {MarkerKind|null}
    */
   static #trackingKind(token) {
     const {enabled, showForGM} = this.#trackingSettings();
-    if ( !enabled || (game.user.isGM && !showForGM) ) return null;
+    if ( !enabled ) return null;
+    if ( game.user.isGM ) {
+      if ( !hasRestrictedVision() || !(showForGM || this.#mayShare()) ) return null;
+      // The GM sees hidden tokens in sight, which are out of play for everyone else
+      if ( token.document.hidden ) return null;
+    }
     return this.#kindOf(token);
   }
 
@@ -528,13 +619,14 @@ export class LastKnownPositions {
 
   /**
    * Which kind of marker this token's sightings use, or null if the user does not track it.
-   * Users never track their own tokens, and the GM never tracks player-owned tokens.
+   * Users never track their own tokens. The GM never tracks player-owned tokens, nor the tokens
+   * the GM looks through.
    * Allies are player-owned or friendly tokens. Every other token is tracked by disposition.
    * @param {foundry.canvas.placeables.Token} token
    * @returns {MarkerKind|null}
    */
   static #kindOf(token) {
-    if ( game.user.isGM ? token.actor?.hasPlayerOwner : token.isOwner ) return null;
+    if ( game.user.isGM ? (token.actor?.hasPlayerOwner || token.controlled) : token.isOwner ) return null;
     const {allies, dispositions} = this.#trackingSettings();
     if ( isAlly(token) ) return allies ? "ally" : null;
     const D = CONST.TOKEN_DISPOSITIONS;
@@ -650,7 +742,7 @@ export class LastKnownPositions {
    * @param {LastKnownData} sighting
    */
   static #receiveSighting(sighting) {
-    if ( !getSetting(SETTINGS.LAST_KNOWN_SHARE) || !sighting?.tokenId ) return;
+    if ( !getSetting(SETTINGS.LAST_KNOWN_SHARE) || !sighting?.tokenId || !this.#keepsSightings() ) return;
 
     // Sighting on the scene this user is viewing
     if ( canvas.ready && (sighting.sceneId === canvas.scene.id) ) {
