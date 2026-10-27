@@ -58,6 +58,7 @@ Show Markers to Game Master is set per client. All other settings are world sett
 
 - Each player's markers come from their own vision, so players who see differently can have different markers.
 - Proximity is measured in a straight line between token centers.
+- If the GM selects tokens where at least one does not **Share Sightings With Party**, sharing is **off**. Foundry merges the vision of all controlled tokens, so tokens without sharing would leak what they see.
 
 ## API
 
