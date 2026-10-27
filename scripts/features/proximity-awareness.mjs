@@ -1,5 +1,7 @@
 import { SETTINGS, getSetting } from "../settings.mjs";
-import { getObservers, getRenderedCenter, gridDistance, isAlly, isSightBlocked } from "../helpers/observers.mjs";
+import {
+  getObservers, getRenderedCenter, gridDistance, isAlly, isSightBlocked, sharesSightings
+} from "../helpers/observers.mjs";
 import { cachePerTask } from "../helpers/cache.mjs";
 import { ExploredFogFilter } from "../canvas/explored-fog-filter.mjs";
 
@@ -101,15 +103,52 @@ export class ProximityAwareness {
     if ( token.document.hidden ) return false;
     if ( !this.#isEligible(token, targets) ) return false;
 
-    const target = getRenderedCenter(token);
-    for ( const observer of observers ) {
-      if ( observer === token ) continue;
-      const origin = getRenderedCenter(observer);
-      if ( gridDistance(origin, target) > range ) continue;
-      if ( wallsBlock && isSightBlocked(origin, target) ) continue;
-      return true;
+    return observers.some(observer => (observer !== token) && this.#reaches(observer, token, range, wallsBlock));
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Is a token within proximity range of another, with no wall in the way if walls block proximity?
+   * @param {foundry.canvas.placeables.Token} origin
+   * @param {foundry.canvas.placeables.Token} target
+   * @param {number} range          Proximity range in grid spaces
+   * @param {boolean} wallsBlock    Whether sight-blocking walls cancel proximity
+   * @returns {boolean}
+   */
+  static #reaches(origin, target, range, wallsBlock) {
+    const from = getRenderedCenter(origin);
+    const to = getRenderedCenter(target);
+    if ( gridDistance(from, to) > range ) return false;
+    return !wallsBlock || !isSightBlocked(from, to);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * The tokens linked to the given tokens through a chain of proximity. Two tokens are linked when
+   * each is within proximity range of the other. Testing both ways keeps one-way walls from linking
+   * them on one client but not on another. Links run through party members: player-owned tokens
+   * and tokens the GM lets share their sightings, unless hidden.
+   * @param {foundry.canvas.placeables.Token[]} seeds   Tokens the chain starts from
+   * @returns {Set<foundry.canvas.placeables.Token>}    The seeds and every token linked to them
+   */
+  static groupOf(seeds) {
+    const {range, wallsBlock} = this.#context();
+    const members = canvas.tokens.placeables.filter(t => !t.document.hidden
+      && (t.actor?.hasPlayerOwner || sharesSightings(t)));
+    const group = new Set(seeds);
+    const queue = [...seeds];
+    while ( queue.length ) {
+      const origin = queue.pop();
+      for ( const token of members ) {
+        if ( group.has(token) ) continue;
+        if ( !this.#reaches(origin, token, range, wallsBlock) || !this.#reaches(token, origin, range, wallsBlock) ) continue;
+        group.add(token);
+        queue.push(token);
+      }
     }
-    return false;
+    return group;
   }
 
   /* -------------------------------------------- */

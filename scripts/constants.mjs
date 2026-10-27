@@ -17,6 +17,12 @@ export const SOCKET_NAME = `module.${MODULE_ID}`;
 export const I18N = "SITAWARE";
 
 /**
+ * The token flag which lets a GM-controlled token share its sightings with the party.
+ * @type {string}
+ */
+export const SHARE_FLAG = "shareSightings";
+
+/**
  * Upper bound for any render texture this module allocates, matching the core visibility texture limit.
  * @type {number}
  */

@@ -8,11 +8,13 @@ import { I18N, MODULE_ID } from "./constants.mjs";
 import { registerSettings } from "./settings.mjs";
 import { ProximityAwareness } from "./features/proximity-awareness.mjs";
 import { LastKnownPositions } from "./features/last-known-positions.mjs";
+import { registerShareControls } from "./apps/share-sightings-controls.mjs";
 
 Hooks.once("init", () => {
   registerSettings({
     refreshVisibility: () => ProximityAwareness.refresh(),
-    refreshMarkers: () => LastKnownPositions.refresh()
+    refreshMarkers: () => LastKnownPositions.refresh(),
+    resetTracking: () => LastKnownPositions.resetTracking()
   });
 
   game.keybindings.register(MODULE_ID, "clearMarkers", {
@@ -26,6 +28,7 @@ Hooks.once("init", () => {
   });
 
   LastKnownPositions.registerHooks();
+  registerShareControls();
 });
 
 /* -------------------------------------------- */

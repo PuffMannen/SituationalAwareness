@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Share Sightings With Party lets GM-controlled tokens share their sightings with the party, through a new option in the token's Vision tab. A new Token HUD button sets it for all selected tokens. Any token can share, but only while every token the GM controls has the option on. Foundry merges the vision of all controlled tokens, so tokens without sharing would leak what they see.
+
+- Limit Share Sightings To Proximity shares sightings only within a group of allies in proximity of each other. A chain of allies, each in Proximity Range of the next, counts as one group. Allies who meet exchange their markers, keeping the newest of each, and keep them after parting. Walls Block Proximity and Marker Lifetime apply.
+
+### Fixed
+
+- Taking control of another token as GM, or releasing every token, could leave the GM markers where the new token never saw anything.
+- With Show Markers to Game Master off, the GM's client still saved sightings shared for other scenes.
+
 ## 0.3.2
 
 ### Changed
