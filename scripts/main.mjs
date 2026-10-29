@@ -5,7 +5,7 @@
  */
 
 import { I18N, MODULE_ID } from "./constants.mjs";
-import { registerSettings } from "./settings.mjs";
+import { disableInapplicableSettings, registerSettings } from "./settings.mjs";
 import { ProximityAwareness } from "./features/proximity-awareness.mjs";
 import { LastKnownPositions } from "./features/last-known-positions.mjs";
 import { registerShareControls } from "./apps/share-sightings-controls.mjs";
@@ -56,6 +56,10 @@ Hooks.once("ready", () => {
     }
   });
 });
+
+/* -------------------------------------------- */
+
+Hooks.on("renderSettingsConfig", disableInapplicableSettings);
 
 /* -------------------------------------------- */
 

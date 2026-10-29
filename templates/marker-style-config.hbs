@@ -16,7 +16,7 @@
     <fieldset>
       <legend>{{localize "SITAWARE.MarkerStyle.Sections.Color"}}</legend>
       {{formGroup kind.fields.colorMode value=kind.style.colorMode label=(localize "SITAWARE.MarkerStyle.colorMode.Name") localize=true}}
-      {{formGroup kind.fields.color value=kind.style.color label=(localize "SITAWARE.MarkerStyle.color.Name") hint=(localize "SITAWARE.MarkerStyle.color.Hint")}}
+      {{formGroup kind.fields.color value=kind.style.color label=(localize "SITAWARE.MarkerStyle.color.Name")}}
       {{formGroup kind.fields.opacity value=kind.style.opacity label=(localize "SITAWARE.MarkerStyle.opacity.Name")}}
       {{formGroup kind.fields.scale value=kind.style.scale label=(localize "SITAWARE.MarkerStyle.scale.Name") hint=(localize "SITAWARE.MarkerStyle.scale.Hint")}}
     </fieldset>
@@ -38,7 +38,7 @@
     <fieldset>
       <legend>{{localize "SITAWARE.MarkerStyle.Sections.Image"}}</legend>
       {{formGroup kind.fields.image value=kind.style.image label=(localize "SITAWARE.MarkerStyle.image.Name") localize=true}}
-      {{formGroup kind.fields.imagePath value=kind.style.imagePath label=(localize "SITAWARE.MarkerStyle.imagePath.Name") hint=(localize "SITAWARE.MarkerStyle.imagePath.Hint")}}
+      {{formGroup kind.fields.imagePath value=kind.style.imagePath label=(localize "SITAWARE.MarkerStyle.imagePath.Name")}}
       <div class="form-group">
         <label for="{{kind.id}}-icon">{{localize "SITAWARE.MarkerStyle.icon.Name"}}</label>
         <div class="form-fields">
