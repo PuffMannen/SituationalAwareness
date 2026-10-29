@@ -39,6 +39,15 @@
       <legend>{{localize "SITAWARE.MarkerStyle.Sections.Image"}}</legend>
       {{formGroup kind.fields.image value=kind.style.image label=(localize "SITAWARE.MarkerStyle.image.Name") localize=true}}
       {{formGroup kind.fields.imagePath value=kind.style.imagePath label=(localize "SITAWARE.MarkerStyle.imagePath.Name") hint=(localize "SITAWARE.MarkerStyle.imagePath.Hint")}}
+      <div class="form-group">
+        <label for="{{kind.id}}-icon">{{localize "SITAWARE.MarkerStyle.icon.Name"}}</label>
+        <div class="form-fields">
+          <i class="{{kind.style.icon}} fa-fw" data-icon-preview style="font-size: var(--font-size-24); flex: none;"></i>
+          <input type="text" id="{{kind.id}}-icon" name="{{kind.fields.icon.fieldPath}}" value="{{kind.style.icon}}"
+                 list="situational-awareness-icons" autocomplete="off" spellcheck="false" data-icon-input>
+        </div>
+        <p class="hint">{{localize "SITAWARE.MarkerStyle.icon.Hint"}}</p>
+      </div>
       {{formGroup kind.fields.imageOpacity value=kind.style.imageOpacity label=(localize "SITAWARE.MarkerStyle.imageOpacity.Name")}}
       {{formGroup kind.fields.desaturate value=kind.style.desaturate label=(localize "SITAWARE.MarkerStyle.desaturate.Name")}}
     </fieldset>
@@ -56,4 +65,5 @@
     </fieldset>
   </section>
   {{/each}}
+  <datalist id="situational-awareness-icons"></datalist>
 </section>

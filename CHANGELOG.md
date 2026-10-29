@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Markers can show any Font Awesome icon, drawn in the marker color. Set Image to Icon in the marker dialog. The icon field suggests icon names as you type and previews the icon.
+
+### Changed
+
+- Themed presets give allies their own color, so allies and hostiles differ after applying the same preset to both tabs. Espionage and Western hostiles have new colors.
+
 ## 0.4.0
 
 ### Added

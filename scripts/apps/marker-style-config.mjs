@@ -2,6 +2,7 @@ import { I18N, MODULE_ID } from "../constants.mjs";
 import { STYLE_SETTINGS, getMarkerStyle } from "../settings.mjs";
 import { getMarkerStyleField } from "../data/marker-style.mjs";
 import { MARKER_PRESETS, getPresetStyle } from "../data/marker-presets.mjs";
+import { getFontAwesomeIcons, resolveFontAwesome } from "../helpers/font-awesome.mjs";
 
 /** @import { MarkerKind, MarkerStyle } from "../data/marker-style.mjs" */
 
@@ -102,6 +103,34 @@ export class MarkerStyleConfig extends HandlebarsApplicationMixin(ApplicationV2)
         if ( !key ) return;
         this.#replaceDraft(kind, getPresetStyle(key, kind), key);
       });
+    }
+    this.#activateIconInputs();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Suggest every Font Awesome icon in the icon fields, and preview the entered icon as it is typed.
+   */
+  #activateIconInputs() {
+    const datalist = this.element.querySelector(`#${MODULE_ID}-icons`);
+    if ( datalist && !datalist.childElementCount ) {
+      datalist.replaceChildren(...getFontAwesomeIcons().map(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        return option;
+      }));
+    }
+    for ( const input of this.element.querySelectorAll("input[data-icon-input]") ) {
+      const preview = input.closest(".form-fields").querySelector("[data-icon-preview]");
+      const update = () => {
+        const known = !!resolveFontAwesome(input.value);
+        preview.className = `${known ? input.value : "fa-solid fa-circle-exclamation"} fa-fw`;
+        if ( known ) delete preview.dataset.tooltip;
+        else preview.dataset.tooltip = `${I18N}.MarkerStyle.icon.Unknown`;
+      };
+      input.addEventListener("input", update);
+      update();
     }
   }
 
