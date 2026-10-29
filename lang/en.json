@@ -130,8 +130,7 @@
         "Custom": "Custom color"
       },
       "color": {
-        "Name": "Custom Color",
-        "Hint": "Used only when Color is set to Custom color."
+        "Name": "Custom Color"
       },
       "opacity": {
         "Name": "Marker Opacity"
@@ -182,8 +181,7 @@
         "None": "No image"
       },
       "imagePath": {
-        "Name": "Custom Image",
-        "Hint": "Used only when Image is set to Custom image."
+        "Name": "Custom Image"
       },
       "icon": {
         "Name": "Icon",
@@ -204,7 +202,7 @@
       },
       "labelText": {
         "Name": "Custom Label",
-        "Hint": "Used only when Label is set to Custom text. {rounds} is replaced with the number of rounds since the sighting."
+        "Hint": "{rounds} is replaced with the number of rounds since the sighting."
       },
       "animation": {
         "Name": "Animation",

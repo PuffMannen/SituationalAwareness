@@ -51,6 +51,26 @@ export function getMarkerStyle(kind="enemy") {
   return completeMarkerStyle(getSetting(STYLE_SETTINGS[kind]), kind);
 }
 
+/**
+ * Settings which apply only while other settings allow them. Each test receives the values
+ * currently entered in the settings dialog.
+ * @type {Readonly<Record<string, (values: Record<string, *>) => boolean>>}
+ */
+const SETTING_DEPENDENCIES = Object.freeze({
+  [SETTINGS.PROXIMITY_RANGE]: v => v[SETTINGS.PROXIMITY_ENABLED],
+  [SETTINGS.PROXIMITY_TARGETS]: v => v[SETTINGS.PROXIMITY_ENABLED],
+  [SETTINGS.PROXIMITY_WALLS]: v => v[SETTINGS.PROXIMITY_ENABLED],
+  [SETTINGS.LAST_KNOWN_DISPOSITIONS]: v => v[SETTINGS.LAST_KNOWN_ENABLED],
+  [SETTINGS.LAST_KNOWN_ALLIES]: v => v[SETTINGS.LAST_KNOWN_ENABLED],
+  [SETTINGS.LAST_KNOWN_SHARE]: v => v[SETTINGS.LAST_KNOWN_ENABLED],
+  [SETTINGS.LAST_KNOWN_SHARE_PROXIMITY]: v => v[SETTINGS.LAST_KNOWN_ENABLED] && v[SETTINGS.LAST_KNOWN_SHARE]
+    && v[SETTINGS.PROXIMITY_ENABLED],
+  [SETTINGS.LAST_KNOWN_LIFETIME]: v => v[SETTINGS.LAST_KNOWN_ENABLED],
+  [SETTINGS.LAST_KNOWN_CLEAR]: v => v[SETTINGS.LAST_KNOWN_ENABLED],
+  [SETTINGS.LAST_KNOWN_CLEAR_DELAY]: v => v[SETTINGS.LAST_KNOWN_ENABLED] && v[SETTINGS.LAST_KNOWN_CLEAR],
+  [SETTINGS.LAST_KNOWN_GM]: v => v[SETTINGS.LAST_KNOWN_ENABLED]
+});
+
 /* -------------------------------------------- */
 
 /**
@@ -130,4 +150,31 @@ export function registerSettings({refreshVisibility, refreshMarkers, resetTracki
     restricted: true
   });
 
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Disable settings in the core settings dialog while they do not apply, as core's own config
+ * dialogs do. Core saves only enabled inputs, so a disabled setting keeps its stored value.
+ * @param {foundry.applications.settings.SettingsConfig} app
+ * @param {HTMLElement} element
+ */
+export function disableInapplicableSettings(app, element) {
+  const inputOf = key => element.querySelector(`[name="${MODULE_ID}.${key}"]`);
+  const update = () => {
+    const values = {};
+    for ( const key of Object.values(SETTINGS) ) {
+      const input = inputOf(key);
+      // Players see only client settings, so world settings come from their stored values
+      if ( !input ) values[key] = getSetting(key);
+      else values[key] = input.type === "checkbox" ? input.checked : input.value;
+    }
+    for ( const [key, applies] of Object.entries(SETTING_DEPENDENCIES) ) {
+      const input = inputOf(key);
+      if ( input ) input.disabled = !applies(values);
+    }
+  };
+  for ( const key of Object.values(SETTINGS) ) inputOf(key)?.addEventListener("change", update);
+  update();
 }

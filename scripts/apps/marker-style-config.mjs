@@ -37,6 +37,22 @@ export class MarkerStyleConfig extends HandlebarsApplicationMixin(ApplicationV2)
     }
   };
 
+  /**
+   * Style fields which apply only for some values of other fields.
+   * @type {Readonly<Record<string, (style: MarkerStyle) => boolean>>}
+   */
+  static #DEPENDENCIES = Object.freeze({
+    color: style => style.colorMode === "custom",
+    ringWidth: style => (style.ring !== "none") || (style.animation === "pulseGlow"),
+    headingStyle: style => style.showHeading,
+    imagePath: style => style.image === "custom",
+    icon: style => style.image === "icon",
+    imageOpacity: style => style.image !== "none",
+    desaturate: style => ["ghost", "custom"].includes(style.image),
+    labelText: style => style.label === "custom",
+    animationSpeed: style => style.animation !== "none"
+  });
+
   /** @override */
   static PARTS = {
     tabs: {template: "templates/generic/tab-navigation.hbs"},
@@ -105,6 +121,31 @@ export class MarkerStyleConfig extends HandlebarsApplicationMixin(ApplicationV2)
       });
     }
     this.#activateIconInputs();
+    this.#disableInapplicableFields();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _onChangeForm(formConfig, event) {
+    super._onChangeForm(formConfig, event);
+    this.#disableInapplicableFields();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Disable the fields which do not apply to the style entered on each tab, as core's own config
+   * dialogs do. Disabled fields keep their values, since the form is read with disabled fields.
+   */
+  #disableInapplicableFields() {
+    for ( const [kind, style] of Object.entries(this.#readForm()) ) {
+      const fields = getMarkerStyleField(kind).fields;
+      for ( const [name, applies] of Object.entries(MarkerStyleConfig.#DEPENDENCIES) ) {
+        const input = this.element.querySelector(`[name="${fields[name].fieldPath}"]`);
+        if ( input ) input.disabled = !applies(style);
+      }
+    }
   }
 
   /* -------------------------------------------- */
@@ -146,13 +187,13 @@ export class MarkerStyleConfig extends HandlebarsApplicationMixin(ApplicationV2)
   /* -------------------------------------------- */
 
   /**
-   * The styles currently entered in the form, by marker kind.
+   * The styles currently entered in the form, by marker kind, including disabled fields.
    * Core names each input by its full setting path, because each schema is a setting's type.
    * @returns {Partial<Record<MarkerKind, object>>}
    */
   #readForm() {
     const FormDataExtended = foundry.applications.ux.FormDataExtended;
-    const submitted = foundry.utils.expandObject(new FormDataExtended(this.element).object);
+    const submitted = foundry.utils.expandObject(new FormDataExtended(this.element, {disabled: true}).object);
     return MarkerStyleConfig.#stylesFrom(submitted);
   }
 
@@ -191,14 +232,12 @@ export class MarkerStyleConfig extends HandlebarsApplicationMixin(ApplicationV2)
 
   /**
    * Save both submitted styles. Core cleans and validates each against its setting's schema.
+   * The form is read again with its disabled fields, which core's form data leaves out.
    * @this {MarkerStyleConfig}
-   * @param {SubmitEvent} event
-   * @param {HTMLFormElement} form
-   * @param {foundry.applications.ux.FormDataExtended} formData
    * @returns {Promise<void>}
    */
-  static async #onSubmit(event, form, formData) {
-    const styles = MarkerStyleConfig.#stylesFrom(foundry.utils.expandObject(formData.object));
+  static async #onSubmit() {
+    const styles = this.#readForm();
     for ( const [kind, style] of Object.entries(styles) ) {
       await game.settings.set(MODULE_ID, STYLE_SETTINGS[kind], style);
     }

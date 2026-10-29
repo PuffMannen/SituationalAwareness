@@ -4,23 +4,23 @@
 
 ### Added
 
-- Markers can show any Font Awesome icon, drawn in the marker color. Set Image to Icon in the marker dialog. The icon field suggests icon names as you type and previews the icon.
+- Markers can show any Font Awesome icon, drawn in the marker color. Set Image to Icon in the marker dialog. The Icon field suggests icons as you type and shows a preview.
 
 ### Changed
 
-- Themed presets give allies their own color, so allies and hostiles differ after applying the same preset to both tabs. Espionage and Western hostiles have new colors.
+- Themed presets give allies their own color, so allies and hostiles look different when the same preset is applied to both tabs. Espionage and Western hostiles have new colors.
+- Settings that do not apply are now disabled. Disabled settings keep their values.
 
 ## 0.4.0
 
 ### Added
 
 - Share Sightings With Party lets GM-controlled tokens share their sightings with the party, through a new option in the token's Vision tab. A new Token HUD button sets it for all selected tokens. Any token can share, but only while every token the GM controls has the option on. Foundry merges the vision of all controlled tokens, so tokens without sharing would leak what they see.
-
 - Limit Share Sightings To Proximity shares sightings only within a group of allies in proximity of each other. A chain of allies, each in Proximity Range of the next, counts as one group. Allies who meet exchange their markers, keeping the newest of each, and keep them after parting. Walls Block Proximity and Marker Lifetime apply.
 
 ### Fixed
 
-- Taking control of another token as GM, or releasing every token, could leave the GM markers where the new token never saw anything.
+- Taking control of another token as GM, or releasing every token, could leave GM markers in places the new token never saw.
 - With Show Markers to Game Master off, the GM's client still saved sightings shared for other scenes.
 
 ## 0.3.2
@@ -67,7 +67,7 @@
 - The marker dialog could not scroll when it was taller than the screen.
 - Narrowing Tracked Tokens or turning off Track Allies left old markers for tokens no longer tracked. Markers are checked again whenever settings change.
 - Shared sightings for another scene could overwrite each other when two arrived at once.
-- Changing scene quickly could leave a burst of false markers on the new scene.
+- Switching scenes quickly could leave a burst of false markers on the new scene.
 
 ### Removed
 
