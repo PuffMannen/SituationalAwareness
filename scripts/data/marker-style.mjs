@@ -10,8 +10,9 @@ import { I18N } from "../constants.mjs";
  * @property {number} fillOpacity                 Opacity of the fill inside the shape. 0 means no fill
  * @property {boolean} showHeading                Draw an arrow for the last direction of travel
  * @property {"edge"|"large"} headingStyle        A small arrowhead on the edge, or a large arrow
- * @property {"ghost"|"custom"|"none"} image      Token image, a custom image, or no image
+ * @property {"ghost"|"custom"|"icon"|"none"} image  Token image, a custom image, an icon, or no image
  * @property {string|null} imagePath              Path of the custom image
+ * @property {string} icon                        Font Awesome classes of the icon, such as "fa-solid fa-skull"
  * @property {number} imageOpacity                Opacity of the image
  * @property {boolean} desaturate                 Render the image in grayscale
  * @property {"age"|"custom"|"none"} label        Elapsed time, custom text, or no label
@@ -62,6 +63,7 @@ export const MARKER_STYLE_CHOICES = Object.freeze({
   image: {
     ghost: `${I18N}.MarkerStyle.image.Ghost`,
     custom: `${I18N}.MarkerStyle.image.Custom`,
+    icon: `${I18N}.MarkerStyle.image.Icon`,
     none: `${I18N}.MarkerStyle.image.None`
   },
   label: {
@@ -132,6 +134,7 @@ function createMarkerStyleField() {
     headingStyle: new f.StringField({required: true, blank: false, choices: C.headingStyle, initial: "edge"}),
     image: new f.StringField({required: true, blank: false, choices: C.image, initial: "ghost"}),
     imagePath: new f.FilePathField({categories: ["IMAGE"], initial: null}),
+    icon: new f.StringField({required: true, blank: false, trim: true, initial: "fa-solid fa-question"}),
     imageOpacity: new f.AlphaField({initial: 0.35}),
     desaturate: new f.BooleanField({initial: true}),
     label: new f.StringField({required: true, blank: false, choices: C.label, initial: "age"}),

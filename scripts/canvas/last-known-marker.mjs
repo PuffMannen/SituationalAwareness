@@ -16,6 +16,7 @@
  */
 
 import { I18N, MODULE_ID } from "../constants.mjs";
+import { resolveFontAwesome } from "../helpers/font-awesome.mjs";
 
 /** File extensions which load as video textures and are skipped for ghost images. */
 const VIDEO_EXTENSIONS = /\.(webm|mp4|m4v|ogv|ogg)(\?.*)?$/i;
@@ -140,9 +141,10 @@ export class LastKnownMarker extends PIXI.Container {
 
     if ( style.animation !== "none" ) this.#startAnimation();
 
-    // Image, loaded last so a slow texture never delays the outline
+    // Image or icon, loaded last so a slow texture or font never delays the outline
     const src = {ghost: this.data.img, custom: style.imagePath}[style.image];
-    if ( src && !VIDEO_EXTENSIONS.test(src) ) await this.#drawImage(src, width * scale, height * scale, style);
+    if ( style.image === "icon" ) await this.#drawIcon(radius, color, style);
+    else if ( src && !VIDEO_EXTENSIONS.test(src) ) await this.#drawImage(src, width * scale, height * scale, style);
     return this;
   }
 
@@ -212,6 +214,34 @@ export class LastKnownMarker extends PIXI.Container {
     catch(err) {
       console.debug("Situational Awareness | Marker image unavailable", err);
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Add the style's Font Awesome icon beneath the shape, in the marker color.
+   * @param {number} radius
+   * @param {number} color
+   * @param {import("../data/marker-style.mjs").MarkerStyle} style
+   * @returns {Promise<void>}
+   */
+  async #drawIcon(radius, color, style) {
+    const icon = resolveFontAwesome(style.icon);
+    if ( !icon ) return;
+    const fontSize = Math.max(8, Math.round(radius * 1.1));
+    try {
+      await document.fonts.load(`${icon.fontWeight} ${fontSize}px ${icon.fontFamily}`, icon.glyph);
+    }
+    catch(err) {
+      console.debug("Situational Awareness | Marker icon font unavailable", err);
+    }
+    if ( this.destroyed || !this.#body || (this.#style !== style) ) return;
+    const TextClass = foundry.canvas.containers?.PreciseText ?? PIXI.Text;
+    const options = {fontFamily: icon.fontFamily, fontWeight: icon.fontWeight, fontSize, fill: color};
+    const text = new TextClass(icon.glyph, TextClass.getTextStyle?.(options) ?? options);
+    text.anchor.set(0.5);
+    text.alpha = style.imageOpacity;
+    this.#body.addChildAt(text, 0);
   }
 
   /* -------------------------------------------- */

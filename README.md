@@ -28,7 +28,7 @@ By default only hostile tokens are tracked. Neutral tokens and allies you don't 
 
 ### Customizing markers
 
-As GM, click **Customize Markers** in the module settings. Hostiles and allies each have their own tab. Start from a preset (Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker or Minimal), then adjust color, size, shape, outline, heading arrow, image, label and animation.
+As GM, click **Customize Markers** in the module settings. Hostiles and allies each have their own tab. Start from a preset (Classic, Modern tactical, Espionage, Science fiction, Arcane fantasy, Horror, Western, Tracker or Minimal), then adjust color, size, shape, outline, heading arrow, image, label and animation. Themed presets give allies their own color. The image can be the token image, a custom image, or any Font Awesome icon drawn in the marker color.
 
 ## Proximity awareness
 

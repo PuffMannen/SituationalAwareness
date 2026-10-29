@@ -178,11 +178,17 @@
         "Name": "Image",
         "Ghost": "Token image",
         "Custom": "Custom image",
+        "Icon": "Icon",
         "None": "No image"
       },
       "imagePath": {
         "Name": "Custom Image",
         "Hint": "Used only when Image is set to Custom image."
+      },
+      "icon": {
+        "Name": "Icon",
+        "Hint": "Search icons. fa-regular, fa-light, fa-thin, fa-duotone and fa-brands are also available.",
+        "Unknown": "Unknown icon. Check the spelling or try another style."
       },
       "imageOpacity": {
         "Name": "Image Opacity"
